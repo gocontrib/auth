@@ -1,4 +1,4 @@
-# auth
+# auth [![Build Status](https://drone.io/github.com/gocontrib/auth/status.png)](https://drone.io/github.com/gocontrib/auth/latest)
 
 Golang package with generic implementation of Basic HTTP authentication middleware for the following frameworks:
 
