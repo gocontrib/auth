@@ -23,22 +23,28 @@ type Config struct {
 	UnauthorizedHandler http.Handler
 }
 
-// Middleware returns gohttp auth middleware.
-func Middleware(config Config) func(http.Handler) http.Handler {
+func (config Config) setDefaults() Config {
 	if config.UnauthorizedHandler == nil {
 		config.UnauthorizedHandler = http.HandlerFunc(defaultUnauthorizedHandler)
 	}
+	return config
+}
+
+// Middleware returns gohttp auth middleware.
+func Middleware(config Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return &gohttpMiddleware{config, next}
+		return Handler(config, next)
 	}
+}
+
+// Handler creates auth middleware http handler.
+func Handler(config Config, next http.Handler) http.Handler {
+	return &gohttpMiddleware{config.setDefaults(), next}
 }
 
 // Negroni returns negroni auth middleware.
 func Negroni(config Config) negroni.Handler {
-	if config.UnauthorizedHandler == nil {
-		config.UnauthorizedHandler = http.HandlerFunc(defaultUnauthorizedHandler)
-	}
-	return &negroniMiddleware{config}
+	return &negroniMiddleware{config.setDefaults()}
 }
 
 // gohttp middleware
