@@ -9,7 +9,7 @@ import "fmt"
 import "encoding/base64"
 
 func TestBasicAuthNoCredentials(t *testing.T) {
-	s := newServer(nil)
+	s := gohttpServer(nil)
 
 	NewRequest(s.URL).
 		Get("/private").
@@ -18,9 +18,9 @@ func TestBasicAuthNoCredentials(t *testing.T) {
 
 func TestBasicAuthValidCredentials(t *testing.T) {
 	var validateCalled = false
-	var validationResult interface{} = nil
+	var validationResult interface{}
 
-	s := newServer(func(valid bool) {
+	s := gohttpServer(func(valid bool) {
 		validateCalled = true
 		validationResult = valid
 	})
@@ -35,10 +35,10 @@ func TestBasicAuthValidCredentials(t *testing.T) {
 	}
 }
 
-func newServer(cb func(bool)) *httptest.Server {
+func gohttpServer(cb func(bool)) *httptest.Server {
 	a := app.New()
 
-	a.Use(Basic(BasicConfig{
+	a.Use(Middleware(Config{
 		Validate: func(r *http.Request, user, password string) bool {
 			res := user == "bob" && password == "b0b"
 			if cb != nil {
