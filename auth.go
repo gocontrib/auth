@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"net/http"
 	"strings"
-
-	"github.com/codegangsta/negroni"
 )
 
 const (
@@ -42,11 +40,6 @@ func Handler(config Config, next http.Handler) http.Handler {
 	return &gohttpMiddleware{config.setDefaults(), next}
 }
 
-// Negroni returns negroni auth middleware.
-func Negroni(config Config) negroni.Handler {
-	return &negroniMiddleware{config.setDefaults()}
-}
-
 // gohttp middleware
 type gohttpMiddleware struct {
 	config Config
@@ -55,25 +48,10 @@ type gohttpMiddleware struct {
 
 // ServeHTTP implementation.
 func (m *gohttpMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	authImpl(m.config, w, r, m.next)
-}
-
-// negroni middleware
-type negroniMiddleware struct {
-	config Config
-}
-
-// ServeHTTP implementation.
-func (m *negroniMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	authImpl(m.config, w, r, next)
-}
-
-// auth implementation
-func authImpl(config Config, w http.ResponseWriter, r *http.Request, next http.Handler) {
-	if validate(config, r) {
-		next.ServeHTTP(w, r)
+	if validate(m.config, r) {
+		m.next.ServeHTTP(w, r)
 	} else {
-		config.UnauthorizedHandler.ServeHTTP(w, r)
+		m.config.UnauthorizedHandler.ServeHTTP(w, r)
 	}
 }
 
