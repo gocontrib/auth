@@ -18,7 +18,7 @@ import "fmt"
 func main() {
   app := app.New()
 
-  app.Use(auth.Basic(auth.BasicConfig{
+  app.Use(auth.Middleware(auth.Config{
     Validate: func(r *http.Request, user, password string) bool {
       return user == "bob" && password == "b0b"
     }
