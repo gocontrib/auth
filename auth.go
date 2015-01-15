@@ -37,8 +37,8 @@ type Config struct {
 	// ValidateCustom is function to validate custom authorization scheme
 	ValidateCustom func(r *http.Request, scheme, custom string) error
 
-	// UnauthorizedHandler is optional error handler to override default error handler.
-	UnauthorizedHandler http.Handler
+	// ErrorHandler is optional error handler to override default error handler.
+	ErrorHandler func(w http.ResponseWriter, r *http.Request, err error)
 
 	// SecretKey is function to get secret key for given JWT token
 	SecretKey jwt.Keyfunc
@@ -48,8 +48,8 @@ type Config struct {
 }
 
 func (config Config) setDefaults() Config {
-	if config.UnauthorizedHandler == nil {
-		config.UnauthorizedHandler = http.HandlerFunc(defaultUnauthorizedHandler)
+	if config.ErrorHandler == nil {
+		config.ErrorHandler = defaultErrorHandler
 	}
 	if config.SecretKey == nil {
 		config.SecretKey = defaultSecretKey
@@ -94,8 +94,7 @@ func (m *gohttpMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		m.next.ServeHTTP(w, r)
 	} else {
-		// TODO log error
-		m.config.UnauthorizedHandler.ServeHTTP(w, r)
+		m.config.ErrorHandler(w, r, err)
 	}
 }
 
@@ -172,7 +171,11 @@ func (config Config) validateJWT(r *http.Request, token string) error {
 	return err
 }
 
-// defaultUnauthorizedHandler provides a default HTTP 401 Unauthorized response.
-func defaultUnauthorizedHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+// defaultErrorHandler provides a default HTTP 401 Unauthorized response.
+func defaultErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
+	var text = http.StatusText(http.StatusUnauthorized)
+	if err != nil {
+		text += ": " + err.Error()
+	}
+	http.Error(w, text, http.StatusUnauthorized)
 }
