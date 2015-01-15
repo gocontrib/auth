@@ -39,12 +39,15 @@ func gohttpServer(cb func(bool)) *httptest.Server {
 	a := app.New()
 
 	a.Use(Middleware(Config{
-		Validate: func(r *http.Request, user, password string) bool {
+		Validate: func(r *http.Request, user, password string) error {
 			res := user == "bob" && password == "b0b"
 			if cb != nil {
 				cb(res)
 			}
-			return res
+			if res {
+				return nil
+			}
+			return fmt.Errorf("Invalid user name %s or password", user)
 		},
 	}))
 

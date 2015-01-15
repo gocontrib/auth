@@ -1,11 +1,9 @@
 # auth [![Build Status](https://drone.io/github.com/gocontrib/auth/status.png)](https://drone.io/github.com/gocontrib/auth/latest)
 
-Golang package with generic implementation of Basic HTTP authentication middleware for the following frameworks:
+Golang http middleware with generic implementation of [Basic HTTP](http://en.wikipedia.org/wiki/Basic_access_authentication)
+and [JWT](http://jwt.io/) authentication schemes.
 
-* [gohttp](https://github.com/gohttp/app)
-* [negroni](https://github.com/codegangsta/negroni)
-
-## gohttp example
+### Basic auth example
 
 ```go
 package main
@@ -19,8 +17,11 @@ func main() {
   app := app.New()
 
   app.Use(auth.Middleware(auth.Config{
-    Validate: func(r *http.Request, user, password string) bool {
-      return user == "bob" && password == "b0b"
+    Validate: func(r *http.Request, user, password string) error {
+      if user == "bob" && password == "b0b" {
+        return nil
+      }
+      return fmt.Errorf("Invalid user name '%s' or password", user)
     }
   }))
 
