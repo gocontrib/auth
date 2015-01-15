@@ -162,12 +162,14 @@ func (config Config) validateJWT(r *http.Request, token string) error {
 	}
 
 	if config.ValidateToken != nil {
-		return config.ValidateToken(r, tok)
+		err = config.ValidateToken(r, tok)
 	}
 
-	context.Set(r, keyToken, tok)
+	if err != nil {
+		context.Set(r, keyToken, tok)
+	}
 
-	return nil
+	return err
 }
 
 // defaultUnauthorizedHandler provides a default HTTP 401 Unauthorized response.
