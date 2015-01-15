@@ -9,6 +9,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gocontrib/context"
+	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -21,6 +22,11 @@ var (
 	errNoAuthorizationHeader  = errors.New("Authorization header is not set")
 	errBadAuthorizationHeader = errors.New("Invalid authorization header is not set")
 	errInvalidJwtToken        = errors.New("The token isn't valid")
+)
+
+var (
+	// default random secret key used to validate JWT tokens
+	secret = securecookie.GenerateRandomKey(32)
 )
 
 // Config defines options for authentication middleware.
@@ -45,7 +51,14 @@ func (config Config) setDefaults() Config {
 	if config.UnauthorizedHandler == nil {
 		config.UnauthorizedHandler = http.HandlerFunc(defaultUnauthorizedHandler)
 	}
+	if config.SecretKey == nil {
+		config.SecretKey = defaultSecretKey
+	}
 	return config
+}
+
+func defaultSecretKey(token *jwt.Token) (interface{}, error) {
+	return []byte(secret), nil
 }
 
 // Middleware returns gohttp auth middleware.
