@@ -6,9 +6,12 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/drone/config"
 	"github.com/gocontrib/context"
+	"github.com/gocontrib/request"
 	"github.com/gorilla/securecookie"
 )
 
@@ -22,12 +25,26 @@ var (
 	errNoAuthorizationHeader  = errors.New("Authorization header is not set")
 	errBadAuthorizationHeader = errors.New("Invalid authorization header is not set")
 	errInvalidJwtToken        = errors.New("The token isn't valid")
+	errJwtNoUserID            = errors.New("JWT has no user_id claim")
 )
 
 var (
-	// default random secret key used to validate JWT tokens
-	secret = securecookie.GenerateRandomKey(32)
+	// random key used to create jwt if none provided in the configuration
+	random  = securecookie.GenerateRandomKey(32)
+	secret  = config.String("session-secret", string(random))
+	expires = config.Duration("session-expires", time.Hour*24*30)
 )
+
+// GenerateToken generates a JWT token for the user session
+// that can be appended to the #access_token segment to
+// facilitate client-based OAuth2.
+func GenerateToken(r *http.Request, uid int64) (string, error) {
+	var token = jwt.New(jwt.GetSigningMethod("HS256"))
+	token.Claims["user_id"] = uid
+	token.Claims["audience"] = request.GetURL(r)
+	token.Claims["expires"] = time.Now().UTC().Add(*expires).Unix()
+	return token.SignedString([]byte(*secret))
+}
 
 // Config defines options for authentication middleware.
 type Config struct {
@@ -40,11 +57,15 @@ type Config struct {
 	// ErrorHandler is optional error handler to override default error handler.
 	ErrorHandler func(w http.ResponseWriter, r *http.Request, err error)
 
-	// SecretKey is function to get secret key for given JWT token
-	SecretKey jwt.Keyfunc
+	// SecretKey is key string or function to get secret key for given JWT token
+	SecretKey interface{}
+	key       jwt.Keyfunc
 
 	// ValidateToken is function to validate claims of JWT token.
 	ValidateToken func(r *http.Request, token *jwt.Token) error
+
+	// ValidateUser is function to validate user by id
+	ValidateUser func(r *http.Request, uid int64) error
 }
 
 func (config Config) setDefaults() Config {
@@ -54,11 +75,33 @@ func (config Config) setDefaults() Config {
 	if config.SecretKey == nil {
 		config.SecretKey = defaultSecretKey
 	}
+	config.key = keyFn(config.SecretKey)
 	return config
 }
 
+func keyFn(i interface{}) jwt.Keyfunc {
+	switch i.(type) {
+	case jwt.Keyfunc:
+		return i.(jwt.Keyfunc)
+	case func(*jwt.Token) (interface{}, error):
+		return i.(func(*jwt.Token) (interface{}, error))
+	case string:
+		var s = i.(string)
+		return func(_ *jwt.Token) (interface{}, error) {
+			return []byte(s), nil
+		}
+	case []byte:
+		var s = i.([]byte)
+		return func(_ *jwt.Token) (interface{}, error) {
+			return s, nil
+		}
+	default:
+		panic("invalid secret key")
+	}
+}
+
 func defaultSecretKey(token *jwt.Token) (interface{}, error) {
-	return []byte(secret), nil
+	return []byte(*secret), nil
 }
 
 // Middleware returns gohttp auth middleware.
@@ -104,12 +147,21 @@ func (config Config) validate(r *http.Request) error {
 	if len(h) > 0 {
 		return config.validateHeader(r, h)
 	}
+
+	// auth_token as part of url
 	if r.Method == "GET" {
-		var token = r.FormValue(keyToken)
+		var token = r.URL.Query().Get(keyToken)
 		if len(token) > 0 {
 			return config.validateJWT(r, token)
 		}
 	}
+
+	// auth_token as part of form
+	var token = r.FormValue(keyToken)
+	if len(token) > 0 {
+		return config.validateJWT(r, token)
+	}
+
 	return errNoAuthorizationHeader
 }
 
@@ -151,7 +203,7 @@ func (config Config) validateBasic(r *http.Request, token string) error {
 }
 
 func (config Config) validateJWT(r *http.Request, token string) error {
-	var tok, err = jwt.Parse(token, config.SecretKey)
+	var tok, err = jwt.Parse(token, config.key)
 	if err != nil {
 		return err
 	}
@@ -162,6 +214,14 @@ func (config Config) validateJWT(r *http.Request, token string) error {
 
 	if config.ValidateToken != nil {
 		err = config.ValidateToken(r, tok)
+	}
+
+	if config.ValidateUser != nil {
+		var uid, ok = tok.Claims["user_id"].(float64)
+		if !ok {
+			return errJwtNoUserID
+		}
+		err = config.ValidateUser(r, int64(uid))
 	}
 
 	if err != nil {
