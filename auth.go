@@ -38,9 +38,9 @@ var (
 // GenerateToken generates a JWT token for the user session
 // that can be appended to the #access_token segment to
 // facilitate client-based OAuth2.
-func GenerateToken(r *http.Request, uid int64) (string, error) {
+func GenerateToken(r *http.Request, userID interface{}) (string, error) {
 	var token = jwt.New(jwt.GetSigningMethod("HS256"))
-	token.Claims["user_id"] = uid
+	token.Claims["user_id"] = userID
 	token.Claims["audience"] = request.GetURL(r)
 	token.Claims["expires"] = time.Now().UTC().Add(*expires).Unix()
 	return token.SignedString([]byte(*secret))
@@ -68,6 +68,7 @@ type Config struct {
 	ValidateUser func(r *http.Request, uid int64) error
 }
 
+// Initializes default handlers if they omitted.
 func (config Config) setDefaults() Config {
 	if config.ErrorHandler == nil {
 		config.ErrorHandler = defaultErrorHandler
@@ -79,6 +80,7 @@ func (config Config) setDefaults() Config {
 	return config
 }
 
+// Default JWT key function.
 func keyFn(i interface{}) jwt.Keyfunc {
 	switch i.(type) {
 	case jwt.Keyfunc:
@@ -113,10 +115,11 @@ func Middleware(config Config) func(http.Handler) http.Handler {
 
 // Handler creates auth middleware http handler.
 func Handler(config Config, next http.Handler) http.Handler {
-	return &gohttpMiddleware{config.setDefaults(), next}
+	return &middleware{config.setDefaults(), next}
 }
 
 // GetToken returns auth token for given request context
+// TODO consider to remove from this package to remove dependency on gorilla/context package.
 func GetToken(r *http.Request) *jwt.Token {
 	var i = context.Get(r, keyToken)
 	if i == nil {
@@ -126,13 +129,13 @@ func GetToken(r *http.Request) *jwt.Token {
 }
 
 // gohttp middleware
-type gohttpMiddleware struct {
+type middleware struct {
 	config Config
 	next   http.Handler
 }
 
 // ServeHTTP implementation.
-func (m *gohttpMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err = m.config.validate(r)
 	if err == nil {
 		m.next.ServeHTTP(w, r)
