@@ -26,34 +26,9 @@ func LoginHandler(config *Config) http.Handler {
 	config = config.setDefaults()
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		contentType := r.Header.Get("Content-Type")
-		mediaType, _, err := mime.ParseMediaType(contentType)
-		if err != nil {
-			sendError(w, errUnsupportedContentType, http.StatusBadRequest)
-			return
-		}
-
 		cred := &Credentials{}
-
-		if mediaType == contentJSON {
-			err = json.NewDecoder(r.Body).Decode(cred)
-			if err != nil {
-				sendError(w, errInvalidPayload, http.StatusBadRequest)
-				return
-			}
-		} else if mediaType == contentForm {
-			err = r.ParseForm()
-			if err != nil {
-				sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
-				return
-			}
-			err = formDecoder.Decode(cred, r.PostForm)
-			if err != nil {
-				sendError(w, errInvalidPayload, http.StatusBadRequest)
-				return
-			}
-		} else {
-			sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+		err := decodePayload(w, r, cred)
+		if err != nil {
 			return
 		}
 
@@ -86,4 +61,39 @@ func LoginHandler(config *Config) http.Handler {
 		})
 	}
 	return http.HandlerFunc(fn)
+}
+
+func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) error {
+	contentType := r.Header.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		sendError(w, errUnsupportedContentType, http.StatusBadRequest)
+		return err
+	}
+
+	if mediaType == contentJSON {
+		err = json.NewDecoder(r.Body).Decode(payload)
+		if err != nil {
+			sendError(w, errInvalidPayload, http.StatusBadRequest)
+			return err
+		}
+		return nil
+	}
+
+	if mediaType == contentForm {
+		err = r.ParseForm()
+		if err != nil {
+			sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+			return err
+		}
+		err = formDecoder.Decode(payload, r.PostForm)
+		if err != nil {
+			sendError(w, errInvalidPayload, http.StatusBadRequest)
+			return err
+		}
+		return nil
+	}
+
+	sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+	return errUnsupportedContentType
 }
