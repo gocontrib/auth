@@ -17,6 +17,10 @@ func makeTestUserStore() testUserStore {
 		"joe": &testUser{
 			Pwd: "j0e",
 		},
+		"admin": &testUser{
+			Pwd:   "admin",
+			Admin: true,
+		},
 	}
 	store.init()
 	return store

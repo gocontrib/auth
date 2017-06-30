@@ -10,32 +10,53 @@ import (
 	"testing"
 )
 
-func TestBasicAuthNoCredentials(t *testing.T) {
+func TestBasicAuth_NoCredentials(t *testing.T) {
 	config := makeTestConfig()
 	c := makectx(t, config, middlewareServer(config))
-	c.expect.GET("/private").Expect().Status(http.StatusUnauthorized)
+	c.expect.GET("/data").Expect().Status(http.StatusUnauthorized)
+	c.expect.GET("/admin/data").Expect().Status(http.StatusUnauthorized)
 }
 
-func TestBasicAuthValidCredentials(t *testing.T) {
+func TestBasicAuth_ValidCredentials(t *testing.T) {
 	config := makeTestConfig()
 	c := makectx(t, config, middlewareServer(config))
-	c.expect.GET("/private").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusOK)
+	c.expect.GET("/data").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusOK)
+	c.expect.GET("/data").WithBasicAuth("admin", "admin").Expect().Status(http.StatusOK)
+	c.expect.GET("/admin/data").WithBasicAuth("admin", "admin").Expect().Status(http.StatusOK)
 }
 
-func TestValidJWT(t *testing.T) {
+func TestBasicAuth_NoAdminPrivileges(t *testing.T) {
 	config := makeTestConfig()
 	c := makectx(t, config, middlewareServer(config))
-	token := c.makeToken("bob", "b0b")
+	c.expect.GET("/admin/data").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusUnauthorized)
+}
 
-	c.expect.GET("/private").
+func TestJWT_Valid(t *testing.T) {
+	testJWT(t, "/data", "bob", "b0b", http.StatusOK)
+}
+
+func TestJWT_ValidAdmin(t *testing.T) {
+	testJWT(t, "/admin/data", "admin", "admin", http.StatusOK)
+}
+
+func TestJWT_NoAdminPrivileges(t *testing.T) {
+	testJWT(t, "/admin/data", "bob", "b0b", http.StatusUnauthorized)
+}
+
+func testJWT(t *testing.T, path, username, pwd string, status int) {
+	config := makeTestConfig()
+	c := makectx(t, config, middlewareServer(config))
+	token := c.makeToken(username, pwd)
+
+	c.expect.GET(path).
 		WithHeader(authorizationHeader, fmt.Sprintf("%s %s", schemeBearer, token)).
 		Expect().
-		Status(http.StatusOK)
+		Status(status)
 
-	c.expect.GET("/private").
+	c.expect.GET(path).
 		WithQuery(defaultTokenKey, token).
 		Expect().
-		Status(http.StatusOK)
+		Status(status)
 }
 
 type C struct {
@@ -82,9 +103,17 @@ func middlewareServer(config *Config) *httptest.Server {
 
 	r.Use(RequireUser(config))
 
-	r.Get("/private", func(w http.ResponseWriter, r *http.Request) {
+	emptyHandler := func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "ok")
-	})
+	}
+
+	r.Get("/data", emptyHandler)
+
+	ar := chi.NewRouter()
+	ar.Use(RequireAdmin(config))
+	ar.Get("/data", emptyHandler)
+
+	r.Mount("/admin", ar)
 
 	return httptest.NewServer(r)
 }
