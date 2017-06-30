@@ -1,4 +1,5 @@
-# auth [![Build Status](https://drone.io/github.com/gocontrib/auth/status.png)](https://drone.io/github.com/gocontrib/auth/latest)
+[![Build Status](https://travis-ci.org/gocontrib/auth.svg?branch=master)](https://travis-ci.org/gocontrib/auth)
+# auth
 
 Golang http middleware with generic implementation of [Basic HTTP](http://en.wikipedia.org/wiki/Basic_access_authentication)
 and [JWT](http://jwt.io/) authentication schemes.
