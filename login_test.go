@@ -31,14 +31,27 @@ func TestLoginHandler_InvalidContentType(t *testing.T) {
 	config := makeTestConfig()
 	handler := LoginHandler(config)
 	c := makectx(t, httptest.NewServer(handler))
-	c.expect.POST("/").WithFormField("key", "value").Expect().Status(http.StatusUnsupportedMediaType)
+	c.expect.POST("/").WithText("test").Expect().Status(http.StatusUnsupportedMediaType)
 }
 
-func TestLoginHandler_ValidCredentials(t *testing.T) {
+func TestLoginHandler_ValidCredentialsJSON(t *testing.T) {
 	config := makeTestConfig()
 	handler := LoginHandler(config)
 	c := makectx(t, httptest.NewServer(handler))
 	c.expect.POST("/").WithJSON(&Credentials{UserName: "bob", Password: "b0b"}).
+		Expect().
+		Status(http.StatusOK).
+		JSON().
+		Schema(loginSchema)
+}
+
+func TestLoginHandler_ValidCredentialsForm(t *testing.T) {
+	config := makeTestConfig()
+	handler := LoginHandler(config)
+	c := makectx(t, httptest.NewServer(handler))
+	c.expect.POST("/").
+		WithFormField("username", "bob").
+		WithFormField("password", "b0b").
 		Expect().
 		Status(http.StatusOK).
 		JSON().

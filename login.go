@@ -2,14 +2,17 @@ package auth
 
 import (
 	"encoding/json"
+	"github.com/gorilla/schema"
 	"mime"
 	"net/http"
 )
 
+var formDecoder = schema.NewDecoder()
+
 // TODO support user defined expiration
 type Credentials struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
+	UserName string `json:"username" schema:"username"`
+	Password string `json:"password" schema:"password"`
 }
 
 type LoginResponse struct {
@@ -23,7 +26,6 @@ func LoginHandler(config *Config) http.Handler {
 	config = config.setDefaults()
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		// TODO support other content-type
 		contentType := r.Header.Get("Content-Type")
 		mediaType, _, err := mime.ParseMediaType(contentType)
 		if err != nil {
@@ -34,7 +36,18 @@ func LoginHandler(config *Config) http.Handler {
 		cred := &Credentials{}
 
 		if mediaType == contentJSON {
-			err := json.NewDecoder(r.Body).Decode(cred)
+			err = json.NewDecoder(r.Body).Decode(cred)
+			if err != nil {
+				sendError(w, errInvalidLoginPayload, http.StatusBadRequest)
+				return
+			}
+		} else if mediaType == contentForm {
+			err = r.ParseForm()
+			if err != nil {
+				sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+				return
+			}
+			err = formDecoder.Decode(cred, r.PostForm)
 			if err != nil {
 				sendError(w, errInvalidLoginPayload, http.StatusBadRequest)
 				return

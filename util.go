@@ -10,7 +10,10 @@ import (
 	"github.com/tomasen/realip"
 )
 
-const contentJSON = "application/json"
+const (
+	contentJSON = "application/json"
+	contentForm = "application/x-www-form-urlencoded"
+)
 
 var now = func() time.Time {
 	return time.Now().UTC()
