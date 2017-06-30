@@ -1,35 +1,46 @@
 package auth
 
 import (
-	"encoding/base64"
 	"fmt"
-	. "github.com/franela/go-supertest"
-	"github.com/gohttp/app"
-	"github.com/kataras/go-errors"
+	"github.com/go-chi/chi"
+	"gopkg.in/gavv/httpexpect.v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestBasicAuthNoCredentials(t *testing.T) {
-	s := gohttpServer()
-
-	NewRequest(s.URL).
-		Get("/private").
-		Expect(http.StatusUnauthorized)
+	c := makectx(t, middlewareServer())
+	c.expect.GET("/private").Expect().Status(http.StatusUnauthorized)
 }
 
 func TestBasicAuthValidCredentials(t *testing.T) {
-	s := gohttpServer()
-
-	NewRequest(s.URL).
-		Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("bob:b0b"))).
-		Get("/private").
-		Expect(http.StatusOK, "ok")
+	c := makectx(t, middlewareServer())
+	c.expect.GET("/private").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusOK)
 }
 
-func gohttpServer() *httptest.Server {
-	a := app.New()
+type C struct {
+	*testing.T
+	server *httptest.Server
+	expect *httpexpect.Expect
+}
+
+func makectx(t *testing.T, server *httptest.Server) *C {
+	return &C{
+		// t: t,
+		server: server,
+		expect: httpexpect.WithConfig(httpexpect.Config{
+			BaseURL:  server.URL,
+			Reporter: httpexpect.NewAssertReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
+			},
+		}),
+	}
+}
+
+func middlewareServer() *httptest.Server {
+	a := chi.NewRouter()
 
 	store := testUserStore{
 		"bob": &testUser{
@@ -47,50 +58,4 @@ func gohttpServer() *httptest.Server {
 	})
 
 	return httptest.NewServer(a)
-}
-
-type testUser struct {
-	ID    string
-	Name  string
-	Email string
-	Pwd   string
-	Admin bool
-}
-
-func (u *testUser) GetID() string {
-	return u.ID
-}
-
-func (u *testUser) GetName() string {
-	return u.Name
-}
-
-func (u *testUser) GetEmail() string {
-	return u.Email
-}
-
-func (u *testUser) IsAdmin() bool {
-	return u.Admin
-}
-
-type testUserStore map[string]*testUser
-
-func (us testUserStore) ValidateCredentials(username, password string) (User, error) {
-	u, ok := us[username]
-	if !ok {
-		return nil, errors.New("user not found")
-	}
-	if u.Pwd != password {
-		return nil, errors.New("invalid password")
-	}
-	return u, nil
-}
-
-func (us testUserStore) FindUserByID(userID string) (User, error) {
-	for _, u := range us {
-		if u.ID == userID {
-			return u, nil
-		}
-	}
-	return nil, errors.New("user not found")
 }
