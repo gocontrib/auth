@@ -38,7 +38,7 @@ func gohttpServer() *httptest.Server {
 		},
 	}
 
-	a.Use(Middleware(&Config{
+	a.Use(RequireUser(&Config{
 		UserStore: store,
 	}))
 
@@ -53,6 +53,7 @@ type testUser struct {
 	ID    string
 	Email string
 	Pwd   string
+	Admin bool
 }
 
 func (u *testUser) GetID() string {
@@ -61,6 +62,10 @@ func (u *testUser) GetID() string {
 
 func (u *testUser) GetEmail() string {
 	return u.Email
+}
+
+func (u *testUser) IsAdmin() bool {
+	return u.Admin
 }
 
 type testUserStore map[string]*testUser

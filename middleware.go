@@ -14,17 +14,33 @@ const (
 	authorizationHeader = "Authorization"
 )
 
-// Middleware returns auth middleware.
-func Middleware(config *Config) func(http.Handler) http.Handler {
+// RequireUser creates auth middleware with given configuration.
+func RequireUser(config *Config) func(http.Handler) http.Handler {
 	config = config.setDefaults()
 	return func(next http.Handler) http.Handler {
-		return &middleware{config, next}
+		return &middleware{
+			config: config,
+			next:   next,
+		}
+	}
+}
+
+// RequireAdmin creates auth middleware that authenticates only admin users.
+func RequireAdmin(config *Config) func(http.Handler) http.Handler {
+	config = config.setDefaults()
+	return func(next http.Handler) http.Handler {
+		return &middleware{
+			config:       config,
+			next:         next,
+			requireAdmin: true,
+		}
 	}
 }
 
 type middleware struct {
-	config *Config
-	next   http.Handler
+	config       *Config
+	next         http.Handler
+	requireAdmin bool
 }
 
 // ServeHTTP implementation.
@@ -95,7 +111,7 @@ func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.
 		return nil, err
 	}
 
-	return withUser(r.Context(), user), nil
+	return m.validateUser(r, user)
 }
 
 func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Context, error) {
@@ -109,5 +125,20 @@ func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Co
 		return nil, err
 	}
 
+	return m.validateUser(r, user)
+}
+
+func (m *middleware) validateUser(r *http.Request, user User) (context.Context, error) {
+	err := m.checkUser(user)
+	if err != nil {
+		return nil, err
+	}
 	return withUser(r.Context(), user), nil
+}
+
+func (m *middleware) checkUser(user User) error {
+	if m.requireAdmin && !user.IsAdmin() {
+		return errNotAdmin
+	}
+	return nil
 }

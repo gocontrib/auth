@@ -9,4 +9,5 @@ var (
 	errInvalidToken           = errors.New("Invalid auth token")
 	errInvalidIssuer          = errors.New("This token was issued from another host")
 	errInvalidClientIP        = errors.New("This token was issued for another IP address")
+	errNotAdmin               = errors.New("You need admin privileges to make this API call")
 )
