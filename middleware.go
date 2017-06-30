@@ -16,14 +16,10 @@ const (
 
 // Middleware returns auth middleware.
 func Middleware(config *Config) func(http.Handler) http.Handler {
+	config = config.setDefaults()
 	return func(next http.Handler) http.Handler {
-		return Handler(config, next)
+		return &middleware{config, next}
 	}
-}
-
-// Handler creates auth middleware http handler.
-func Handler(config *Config, next http.Handler) http.Handler {
-	return &middleware{config.setDefaults(), next}
 }
 
 type middleware struct {
