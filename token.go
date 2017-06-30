@@ -57,14 +57,12 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 
 	issuer := getString(claims, "iss")
 	if !claims.VerifyIssuer(issuer, true) {
-		// TODO return better error, i.e. "not my token"
-		return nil, errInvalidToken
+		return nil, errInvalidIssuer
 	}
 
 	audience := getString(claims, "aud")
 	if len(expectedAudience) > 0 && audience != expectedAudience {
-		// TODO return better error, i.e. "token issued for another IP address"
-		return nil, errInvalidToken
+		return nil, errInvalidClientIP
 	}
 
 	// check required fields
@@ -74,9 +72,8 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		return nil, errInvalidToken
 	}
 
-	start := getTime(claims, "start")
 	exp := getTime(claims, "exp")
-	if start == nil || exp == nil {
+	if exp == nil {
 		return nil, errInvalidToken
 	}
 
