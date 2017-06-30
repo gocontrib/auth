@@ -38,7 +38,7 @@ func LoginHandler(config *Config) http.Handler {
 		if mediaType == contentJSON {
 			err = json.NewDecoder(r.Body).Decode(cred)
 			if err != nil {
-				sendError(w, errInvalidLoginPayload, http.StatusBadRequest)
+				sendError(w, errInvalidPayload, http.StatusBadRequest)
 				return
 			}
 		} else if mediaType == contentForm {
@@ -49,7 +49,7 @@ func LoginHandler(config *Config) http.Handler {
 			}
 			err = formDecoder.Decode(cred, r.PostForm)
 			if err != nil {
-				sendError(w, errInvalidLoginPayload, http.StatusBadRequest)
+				sendError(w, errInvalidPayload, http.StatusBadRequest)
 				return
 			}
 		} else {
