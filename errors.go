@@ -10,4 +10,7 @@ var (
 	errInvalidIssuer          = errors.New("This token was issued from another host")
 	errInvalidClientIP        = errors.New("This token was issued for another IP address")
 	errNotAdmin               = errors.New("You need admin privileges to make this API call")
+	errInvalidLoginPayload    = errors.New("Invalid payload of login request")
+	errInvalidCredentials     = errors.New("Invalid user credentials")
+	errUnsupportedContentType = errors.New("Unrecognized data format")
 )

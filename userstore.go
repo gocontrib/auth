@@ -2,6 +2,7 @@ package auth
 
 type User interface {
 	GetID() string
+	GetName() string
 	GetEmail() string
 	IsAdmin() bool
 }

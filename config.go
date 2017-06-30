@@ -2,8 +2,10 @@ package auth
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gocontrib/parse"
 	"github.com/gorilla/securecookie"
 	"net/http"
+	"time"
 )
 
 const defaultTokenKey = "auth_token"
@@ -27,6 +29,8 @@ type Config struct {
 
 	// SecretKey is key string or function to get secret key for given JWT token
 	SecretKey interface{}
+
+	TokenExpiration time.Duration
 }
 
 // Initializes default handlers if they omitted.
@@ -42,6 +46,9 @@ func (c *Config) setDefaults() *Config {
 	}
 	if c.ErrorHandler == nil {
 		c.ErrorHandler = defaultErrorHandler
+	}
+	if c.TokenExpiration.Nanoseconds() == 0 {
+		c.TokenExpiration = parse.MustDuration("7d")
 	}
 	return c
 }

@@ -51,6 +51,7 @@ func gohttpServer() *httptest.Server {
 
 type testUser struct {
 	ID    string
+	Name  string
 	Email string
 	Pwd   string
 	Admin bool
@@ -58,6 +59,10 @@ type testUser struct {
 
 func (u *testUser) GetID() string {
 	return u.ID
+}
+
+func (u *testUser) GetName() string {
+	return u.Name
 }
 
 func (u *testUser) GetEmail() string {
