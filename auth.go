@@ -51,18 +51,12 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, error) {
 		return m.validateHeader(r, h)
 	}
 
-	// auth_token as part of url
+	// auth token as part of url
 	if r.Method == "GET" {
 		var token = r.URL.Query().Get(m.config.TokenKey)
 		if len(token) > 0 {
 			return m.jwtHandler(r, token)
 		}
-	}
-
-	// auth_token as part of form
-	var token = r.FormValue(m.config.TokenKey)
-	if len(token) > 0 {
-		return m.jwtHandler(r, token)
 	}
 
 	return nil, errNoAuthorizationHeader
