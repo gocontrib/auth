@@ -17,13 +17,13 @@ func TestParseValidToken(t *testing.T) {
 		UserName:  "test",
 		IssuedAt:  Timestamp(now()),
 		ExpiredAt: Timestamp(now().Add(time.Hour)),
-		ClientID:  "127.0.0.1",
+		ClientIP:  "127.0.0.1",
 	}
 	str, err := token.Encode(config)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, str)
 
-	token2, err := parseToken(config, str, token.ClientID, false)
+	token2, err := parseToken(config, str, token.ClientIP, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, token2)
 	assert.Equal(t, token.UserID, token2.UserID)

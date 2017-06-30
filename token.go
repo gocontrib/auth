@@ -13,7 +13,7 @@ type Token struct {
 	IssuedAt  Timestamp `json:"issued_at"`
 	ExpiredAt Timestamp `json:"expired_at"`
 	Issuer    string    `json:"issuer"`
-	ClientID  string    `json:"client_id"`
+	ClientIP  string    `json:"client_ip"`
 }
 
 func (t *Token) Encode(config *Config) (string, error) {
@@ -29,8 +29,8 @@ func (t *Token) Encode(config *Config) (string, error) {
 		"domain":    t.Domain,
 		"exp":       t.ExpiredAt.Unix(),
 	}
-	if len(t.ClientID) > 0 {
-		claims["aud"] = t.ClientID
+	if len(t.ClientIP) > 0 {
+		claims["aud"] = t.ClientIP
 	}
 	return encodeToken(claims, config)
 }
@@ -60,8 +60,8 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		return nil, errInvalidIssuer
 	}
 
-	audience := getString(claims, "aud")
-	if len(expectedAudience) > 0 && audience != expectedAudience {
+	clientIP := getString(claims, "aud")
+	if len(expectedAudience) > 0 && len(clientIP) > 0 && clientIP != expectedAudience {
 		return nil, errInvalidClientIP
 	}
 
@@ -90,6 +90,6 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		IssuedAt:  Timestamp(*issuedAt),
 		ExpiredAt: Timestamp(*exp),
 		Issuer:    issuer,
-		ClientID:  audience,
+		ClientIP:  clientIP,
 	}, nil
 }
