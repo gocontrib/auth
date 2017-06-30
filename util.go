@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"time"
 	"encoding/json"
-	"strconv"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/tomasen/realip"
 )

@@ -2,15 +2,15 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"net/http"
 	"strings"
-	"context"
 )
 
 const (
-	schemeBasic  = "basic"
-	schemeBearer = "bearer"
+	schemeBasic         = "basic"
+	schemeBearer        = "bearer"
 	authorizationHeader = "Authorization"
 )
 
@@ -109,10 +109,10 @@ func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.
 	}
 	// TODO set ExpiredAt
 	token := &Token{
-		UserID: userID,
+		UserID:   userID,
 		UserName: userName,
 		IssuedAt: Timestamp(now()),
-		Issuer: getIssuer(),
+		Issuer:   getIssuer(),
 	}
 	return withToken(r, token), nil
 }

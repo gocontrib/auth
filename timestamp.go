@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"time"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type Timestamp time.Time

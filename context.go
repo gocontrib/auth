@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"net/http"
 	"golang.org/x/net/context"
+	"net/http"
 )
 
 const tokenContextKey = "request_token"

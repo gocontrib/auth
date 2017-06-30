@@ -1,13 +1,13 @@
 package auth
 
 import (
+	"encoding/base64"
+	"fmt"
 	. "github.com/franela/go-supertest"
 	"github.com/gohttp/app"
-	"net/http/httptest"
 	"net/http"
+	"net/http/httptest"
 	"testing"
-	"fmt"
-	"encoding/base64"
 )
 
 func TestBasicAuthNoCredentials(t *testing.T) {

@@ -7,13 +7,13 @@ import (
 )
 
 type Token struct {
-	UserID string `json:"user_id"`
-	UserName string `json:"user_name"`
-	Domain string `json:"domain"`
-	IssuedAt       Timestamp `json:"issued_at"`
-	ExpiredAt       Timestamp `json:"expired_at"`
-	Issuer         string    `json:"issuer"`
-	ClientID       string    `json:"client_id"`
+	UserID    string    `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	Domain    string    `json:"domain"`
+	IssuedAt  Timestamp `json:"issued_at"`
+	ExpiredAt Timestamp `json:"expired_at"`
+	Issuer    string    `json:"issuer"`
+	ClientID  string    `json:"client_id"`
 }
 
 func (t *Token) Encode(config *Config) (string, error) {
@@ -22,12 +22,12 @@ func (t *Token) Encode(config *Config) (string, error) {
 		issuer = getIssuer()
 	}
 	claims := jwt.MapClaims{
-		"iss":          issuer,
-		"iat":          now().Unix(), // issued_at
-		"user_id":      t.UserID,
+		"iss":       issuer,
+		"iat":       now().Unix(), // issued_at
+		"user_id":   t.UserID,
 		"user_name": t.UserName,
-		"domain":       t.Domain,
-		"exp":          t.ExpiredAt.Unix(),
+		"domain":    t.Domain,
+		"exp":       t.ExpiredAt.Unix(),
 	}
 	if len(t.ClientID) > 0 {
 		claims["aud"] = t.ClientID
@@ -87,13 +87,12 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 	}
 
 	return &Token{
-		UserID:         userID,
-		UserName:    userName,
-		Domain:         getString(claims, "domain"),
-		IssuedAt:       Timestamp(*issuedAt),
+		UserID:    userID,
+		UserName:  userName,
+		Domain:    getString(claims, "domain"),
+		IssuedAt:  Timestamp(*issuedAt),
 		ExpiredAt: Timestamp(*exp),
-		Issuer:         issuer,
-		ClientID:       audience,
+		Issuer:    issuer,
+		ClientID:  audience,
 	}, nil
 }
-
