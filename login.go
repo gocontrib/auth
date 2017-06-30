@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"mime"
 	"net/http"
 )
 
@@ -14,7 +15,7 @@ type Credentials struct {
 type LoginResponse struct {
 	Token     string    `json:"token"`
 	UserID    string    `json:"user_id"`
-	UserName  string    `json:"username"`
+	UserName  string    `json:"user_name"`
 	ExpiredAt Timestamp `json:"expired_at"`
 }
 
@@ -24,22 +25,28 @@ func LoginHandler(config *Config) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		// TODO support other content-type
 		contentType := r.Header.Get("Content-Type")
-		input := &Credentials{}
+		mediaType, _, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			sendError(w, errUnsupportedContentType, http.StatusBadRequest)
+			return
+		}
 
-		if contentType == contentJSON {
-			err := json.NewDecoder(r.Body).Decode(input)
+		cred := &Credentials{}
+
+		if mediaType == contentJSON {
+			err := json.NewDecoder(r.Body).Decode(cred)
 			if err != nil {
 				sendError(w, errInvalidLoginPayload, http.StatusBadRequest)
 				return
 			}
 		} else {
-			sendError(w, errUnsupportedContentType, http.StatusBadRequest)
+			sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
 			return
 		}
 
-		user, err := config.UserStore.ValidateCredentials(input.UserName, input.Password)
+		user, err := config.UserStore.ValidateCredentials(cred.UserName, cred.Password)
 		if err != nil {
-			sendError(w, errInvalidCredentials, http.StatusBadRequest)
+			sendError(w, errInvalidCredentials, http.StatusUnauthorized)
 			return
 		}
 
