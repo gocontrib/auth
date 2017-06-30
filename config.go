@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/securecookie"
 	"net/http"
@@ -14,14 +13,7 @@ var defaultSecretKey = securecookie.GenerateRandomKey(32)
 
 // Config defines options for authentication middleware.
 type Config struct {
-	// ValidateUser is function to validate user credentials
-	ValidateUser func(r *http.Request, username, password string) (string, error)
-
-	// ValidateToken is function to validate token.
-	ValidateToken func(r *http.Request, token *Token) error
-
-	// ValidateCustom is function to validate custom authorization scheme
-	ValidateCustom func(r *http.Request, scheme, custom string) (context.Context, error)
+	UserStore UserStore
 
 	// ErrorHandler is optional error handler to override default error handler.
 	ErrorHandler func(w http.ResponseWriter, r *http.Request, err error)

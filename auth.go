@@ -88,11 +88,7 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 	case schemeBearer:
 		return m.jwtHandler(r, token)
 	default:
-		if m.config.ValidateCustom != nil {
-			return m.config.ValidateCustom(r, scheme, token)
-		}
-		// TODO support guest mode
-		return nil, nil
+		return nil, errUnsupportedAuthScheme
 	}
 }
 
@@ -101,20 +97,15 @@ func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.
 	if err != nil {
 		return nil, err
 	}
+
 	creds := bytes.SplitN(str, []byte(":"), 2)
 	userName := string(creds[0])
-	userID, err := m.config.ValidateUser(r, userName, string(creds[1]))
+	user, err := m.config.UserStore.ValidateCredentials(userName, string(creds[1]))
 	if err != nil {
 		return nil, err
 	}
-	// TODO set ExpiredAt
-	token := &Token{
-		UserID:   userID,
-		UserName: userName,
-		IssuedAt: Timestamp(now()),
-		Issuer:   getIssuer(),
-	}
-	return withToken(r, token), nil
+
+	return withUser(r.Context(), user), nil
 }
 
 func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Context, error) {
@@ -123,10 +114,10 @@ func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Co
 		return nil, err
 	}
 
-	err = m.config.ValidateToken(r, token)
+	user, err := m.config.UserStore.FindUserByID(token.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	return withToken(r, token), nil
+	return withUser(r.Context(), user), nil
 }

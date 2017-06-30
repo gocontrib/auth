@@ -1,21 +1,21 @@
 package auth
 
 import (
-	"golang.org/x/net/context"
+	"context"
 	"net/http"
 )
 
-const tokenContextKey = "request_token"
+const userKey = "user"
 
-// GetToken returns auth token for given request context
-func GetToken(r *http.Request) *Token {
-	var i = r.Context().Value(tokenContextKey)
+// GetRequestUser returns authenticated user for given request
+func GetRequestUser(r *http.Request) User {
+	var i = r.Context().Value(userKey)
 	if i == nil {
 		return nil
 	}
-	return i.(*Token)
+	return i.(User)
 }
 
-func withToken(r *http.Request, token *Token) context.Context {
-	return context.WithValue(r.Context(), tokenContextKey, token)
+func withUser(parent context.Context, user User) context.Context {
+	return context.WithValue(parent, userKey, user)
 }
