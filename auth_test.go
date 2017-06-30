@@ -1,12 +1,14 @@
 package auth
 
-import . "github.com/franela/go-supertest"
-import "github.com/gohttp/app"
-import "net/http/httptest"
-import "net/http"
-import "testing"
-import "fmt"
-import "encoding/base64"
+import (
+	. "github.com/franela/go-supertest"
+	"github.com/gohttp/app"
+	"net/http/httptest"
+	"net/http"
+	"testing"
+	"fmt"
+	"encoding/base64"
+)
 
 func TestBasicAuthNoCredentials(t *testing.T) {
 	s := gohttpServer(nil)
@@ -38,16 +40,16 @@ func TestBasicAuthValidCredentials(t *testing.T) {
 func gohttpServer(cb func(bool)) *httptest.Server {
 	a := app.New()
 
-	a.Use(Middleware(Config{
-		Validate: func(r *http.Request, user, password string) error {
+	a.Use(Middleware(&Config{
+		ValidateUser: func(r *http.Request, user, password string) (string, error) {
 			res := user == "bob" && password == "b0b"
 			if cb != nil {
 				cb(res)
 			}
 			if res {
-				return nil
+				return "", nil
 			}
-			return fmt.Errorf("Invalid user name %s or password", user)
+			return "", fmt.Errorf("Invalid user name %s or password", user)
 		},
 	}))
 
