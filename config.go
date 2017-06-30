@@ -13,6 +13,7 @@ var defaultSecretKey = securecookie.GenerateRandomKey(32)
 
 // Config defines options for authentication middleware.
 type Config struct {
+	// UserStore to validate credentials
 	UserStore UserStore
 
 	// ErrorHandler is optional error handler to override default error handler.
@@ -21,6 +22,7 @@ type Config struct {
 	// TokenKey specifies name of token field to extract from query string
 	TokenKey string
 
+	// SingingMethod specifies JWT signing method
 	SingingMethod jwt.SigningMethod
 
 	// SecretKey is key string or function to get secret key for given JWT token
