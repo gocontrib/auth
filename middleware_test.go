@@ -40,22 +40,13 @@ func makectx(t *testing.T, server *httptest.Server) *C {
 }
 
 func middlewareServer() *httptest.Server {
-	a := chi.NewRouter()
+	r := chi.NewRouter()
 
-	store := testUserStore{
-		"bob": &testUser{
-			ID:  "bob",
-			Pwd: "b0b",
-		},
-	}
+	r.Use(RequireUser(makeTestConfig()))
 
-	a.Use(RequireUser(&Config{
-		UserStore: store,
-	}))
-
-	a.Get("/private", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/private", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "ok")
 	})
 
-	return httptest.NewServer(a)
+	return httptest.NewServer(r)
 }
