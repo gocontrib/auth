@@ -21,7 +21,7 @@ type Pool interface {
 func NewPool(config Config) Pool {
 	cap := config.PoolCapacity
 	if cap <= 0 {
-		return &dummyPool{config}
+		return &unlimitedPool{config}
 	}
 
 	return &chanPool{
@@ -118,18 +118,18 @@ func (p *chanPool) Put(conn *ldapclient.LDAPClient) error {
 	}
 }
 
-type dummyPool struct {
+type unlimitedPool struct {
 	config Config
 }
 
-func (p *dummyPool) Close() {}
+func (p *unlimitedPool) Close() {}
 
-func (p *dummyPool) Get() (*ldapclient.LDAPClient, error) {
+func (p *unlimitedPool) Get() (*ldapclient.LDAPClient, error) {
 	return makeClient(p.config), nil
 }
 
-func (p *dummyPool) Put(obj *ldapclient.LDAPClient) error {
-	obj.Close()
+func (p *unlimitedPool) Put(conn *ldapclient.LDAPClient) error {
+	conn.Close()
 	return nil
 }
 
