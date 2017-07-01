@@ -61,6 +61,13 @@ func (us *UserStore) FindUserByID(userID string) (*UserInfo, error) {
 	return us.makeUser(userID, attrs), nil
 }
 
+func (us *UserStore) Close() {
+	if us.pool != nil {
+		us.pool.Close()
+		us.pool = nil
+	}
+}
+
 func (us *UserStore) makeUser(id string, attrs map[string]string) *UserInfo {
 	displayName, _ := attrs[us.displayNameAttr]
 	email, _ := attrs[us.emailAttr]

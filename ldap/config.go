@@ -13,4 +13,5 @@ type Config struct {
 	InsecureSkipVerify bool
 	DisplayNameAttr    string
 	EmailAttr          string
+	PoolCapacity       int
 }

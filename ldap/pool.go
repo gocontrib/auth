@@ -18,7 +18,8 @@ type Pool interface {
 	Put(*ldapclient.LDAPClient) error
 }
 
-func NewPool(cap int, config Config) Pool {
+func NewPool(config Config) Pool {
+	cap := config.PoolCapacity
 	if cap <= 0 {
 		return &dummyPool{config}
 	}
