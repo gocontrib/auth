@@ -50,7 +50,7 @@ var (
 	}
 	errNotAdmin = &Error{
 		ID:      "AUTH-NOT-ADMIN",
-		Status:  http.StatusUnauthorized,
+		Status:  http.StatusForbidden,
 		Message: "You need admin privileges to make this API call",
 	}
 	errMalformedContent = &Error{
