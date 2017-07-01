@@ -28,7 +28,7 @@ func TestBasicAuth_ValidCredentials(t *testing.T) {
 func TestBasicAuth_NoAdminPrivileges(t *testing.T) {
 	config := makeTestConfig()
 	c := makectx(t, config, middlewareServer(config))
-	c.expect.GET("/admin/data").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusUnauthorized)
+	c.expect.GET("/admin/data").WithBasicAuth("bob", "b0b").Expect().Status(http.StatusForbidden)
 }
 
 func TestJWT_Valid(t *testing.T) {
@@ -40,7 +40,7 @@ func TestJWT_ValidAdmin(t *testing.T) {
 }
 
 func TestJWT_NoAdminPrivileges(t *testing.T) {
-	testJWT(t, "/admin/data", "bob", "b0b", http.StatusUnauthorized)
+	testJWT(t, "/admin/data", "bob", "b0b", http.StatusForbidden)
 }
 
 func testJWT(t *testing.T, path, username, pwd string, status int) {
