@@ -34,7 +34,7 @@ func LoginHandler(config *Config) http.Handler {
 
 		user, err := config.UserStore.ValidateCredentials(cred.UserName, cred.Password)
 		if err != nil {
-			sendError(w, errInvalidCredentials, http.StatusUnauthorized)
+			sendError(w, errBadCredentials.cause(err))
 			return
 		}
 
@@ -47,9 +47,9 @@ func LoginHandler(config *Config) http.Handler {
 			ClientIP:  getClientIP(r),
 		}
 
-		tokenString, err := token.Encode(config)
-		if err != nil {
-			sendError(w, err, http.StatusInternalServerError)
+		tokenString, error := token.Encode(config)
+		if error != nil {
+			sendError(w, error)
 			return
 		}
 
@@ -67,14 +67,14 @@ func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) 
 	contentType := r.Header.Get("Content-Type")
 	mediaType, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		sendError(w, errUnsupportedContentType, http.StatusBadRequest)
+		sendError(w, errUnsupportedContentType)
 		return err
 	}
 
 	if mediaType == contentJSON {
 		err = json.NewDecoder(r.Body).Decode(payload)
 		if err != nil {
-			sendError(w, errInvalidPayload, http.StatusBadRequest)
+			sendError(w, errMalformedContent)
 			return err
 		}
 		return nil
@@ -83,17 +83,17 @@ func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) 
 	if mediaType == contentForm {
 		err = r.ParseForm()
 		if err != nil {
-			sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+			sendError(w, errUnsupportedContentType)
 			return err
 		}
 		err = formDecoder.Decode(payload, r.PostForm)
 		if err != nil {
-			sendError(w, errInvalidPayload, http.StatusBadRequest)
+			sendError(w, errMalformedContent)
 			return err
 		}
 		return nil
 	}
 
-	sendError(w, errUnsupportedContentType, http.StatusUnsupportedMediaType)
+	sendError(w, errUnsupportedContentType)
 	return errUnsupportedContentType
 }

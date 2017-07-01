@@ -52,12 +52,12 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		m.next.ServeHTTP(w, r)
 	} else {
-		m.config.ErrorHandler(w, r, err)
+		sendError(w, err)
 	}
 }
 
 // Validates auth header or auth_token.
-func (m *middleware) authenticate(r *http.Request) (context.Context, error) {
+func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 	var h = r.Header.Get(authorizationHeader)
 	if len(h) > 0 {
 		return m.validateHeader(r, h)
@@ -71,13 +71,13 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, error) {
 		}
 	}
 
-	return nil, errNoAuthorizationHeader
+	return nil, errBadAuthorizationHeader
 }
 
 // Validates authorization header.
-func (m *middleware) validateHeader(r *http.Request, auth string) (context.Context, error) {
+func (m *middleware) validateHeader(r *http.Request, auth string) (context.Context, *Error) {
 	if len(auth) == 0 {
-		return nil, errNoAuthorizationHeader
+		return nil, errBadAuthorizationHeader
 	}
 
 	var f = strings.Fields(auth)
@@ -98,37 +98,37 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 	}
 }
 
-func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.Context, error) {
+func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.Context, *Error) {
 	var str, err = base64.StdEncoding.DecodeString(tokenString)
 	if err != nil {
-		return nil, err
+		return nil, errBadAuthorizationHeader.cause(err)
 	}
 
 	creds := bytes.SplitN(str, []byte(":"), 2)
 	userName := string(creds[0])
 	user, err := m.config.UserStore.ValidateCredentials(userName, string(creds[1]))
 	if err != nil {
-		return nil, err
+		return nil, errBadCredentials.cause(err)
 	}
 
 	return m.validateUser(r, user)
 }
 
-func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Context, error) {
+func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Context, *Error) {
 	token, err := parseToken(m.config, tokenString, getClientIP(r), false)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := m.config.UserStore.FindUserByID(token.UserID)
-	if err != nil {
-		return nil, err
+	user, error := m.config.UserStore.FindUserByID(token.UserID)
+	if error != nil {
+		return nil, errUserNotFound.cause(error)
 	}
 
 	return m.validateUser(r, user)
 }
 
-func (m *middleware) validateUser(r *http.Request, user User) (context.Context, error) {
+func (m *middleware) validateUser(r *http.Request, user User) (context.Context, *Error) {
 	err := m.checkUser(user)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (m *middleware) validateUser(r *http.Request, user User) (context.Context, 
 	return withUser(r.Context(), user), nil
 }
 
-func (m *middleware) checkUser(user User) error {
+func (m *middleware) checkUser(user User) *Error {
 	if m.requireAdmin && !user.IsAdmin() {
 		return errNotAdmin
 	}

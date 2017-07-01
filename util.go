@@ -70,6 +70,12 @@ func getTime(data map[string]interface{}, key string) *time.Time {
 	}
 }
 
+func sendError(w http.ResponseWriter, err *Error) {
+	w.Header().Set("Content-Type", contentJSON)
+	w.WriteHeader(err.Status)
+	sendJSON(w, err)
+}
+
 func sendJSON(w http.ResponseWriter, result interface{}) {
 	w.Header().Set("Content-Type", contentJSON)
 
@@ -89,9 +95,4 @@ func sendJSON(w http.ResponseWriter, result interface{}) {
 		// TODO check whether it is possible to send error at this phase
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-}
-
-func sendError(w http.ResponseWriter, err error, status int) {
-	// TODO consider to send error as JSON
-	http.Error(w, err.Error(), status)
 }

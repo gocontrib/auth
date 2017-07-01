@@ -16,7 +16,7 @@ type Token struct {
 	ClientIP  string    `json:"client_ip"`
 }
 
-func (t *Token) Encode(config *Config) (string, error) {
+func (t *Token) Encode(config *Config) (string, *Error) {
 	issuer := t.Issuer
 	if len(issuer) == 0 {
 		issuer = getIssuer()
@@ -35,12 +35,16 @@ func (t *Token) Encode(config *Config) (string, error) {
 	return encodeToken(claims, config)
 }
 
-func encodeToken(claims jwt.Claims, config *Config) (string, error) {
+func encodeToken(claims jwt.Claims, config *Config) (string, *Error) {
 	token := jwt.NewWithClaims(config.SingingMethod, claims)
-	return token.SignedString(config.SecretKey)
+	str, err := token.SignedString(config.SecretKey)
+	if err != nil {
+		return "", errEncodeTokenFailed.cause(err)
+	}
+	return str, nil
 }
 
-func parseToken(config *Config, tokenString, expectedAudience string, allowExpired bool) (*Token, error) {
+func parseToken(config *Config, tokenString, expectedAudience string, allowExpired bool) (*Token, *Error) {
 	parser := new(jwt.Parser)
 	parser.SkipClaimsValidation = allowExpired
 
@@ -49,7 +53,7 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		return config.SecretKey, nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errInvalidToken.cause(err)
 	}
 	if !token.Valid {
 		return nil, errInvalidToken
