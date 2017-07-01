@@ -23,7 +23,7 @@ func NewUserStore(pool Pool, config Config) *UserStore {
 	}
 	emailAttr := config.EmailAttr
 	if len(emailAttr) == 0 {
-		emailAttr = "email"
+		emailAttr = "mail"
 	}
 	return &UserStore{
 		pool:            pool,
