@@ -62,6 +62,9 @@ func (us testUserStore) FindUserByID(userID string) (User, error) {
 	return nil, errors.New("user not found")
 }
 
+func (us testUserStore) Close() {
+}
+
 type testUser struct {
 	ID    string
 	Name  string
