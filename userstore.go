@@ -10,4 +10,5 @@ type User interface {
 type UserStore interface {
 	ValidateCredentials(username, password string) (User, error)
 	FindUserByID(userID string) (User, error)
+	Close()
 }
