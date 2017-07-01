@@ -33,12 +33,12 @@ func NewUserStore(pool Pool, config Config) *UserStore {
 }
 
 func (us *UserStore) ValidateCredentials(username, password string) (*UserInfo, error) {
-	ldapClient, err := us.pool.Get()
+	client, err := us.pool.Get()
 	if err != nil {
 		return nil, err
 	}
-	defer us.pool.Put(ldapClient)
-	ok, attrs, err := ldapClient.Authenticate(username, password)
+	defer us.pool.Put(client)
+	ok, attrs, err := client.Authenticate(username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (us *UserStore) ValidateCredentials(username, password string) (*UserInfo, 
 }
 
 func (us *UserStore) FindUserByID(userID string) (*UserInfo, error) {
-	ldapClient, err := us.pool.Get()
+	client, err := us.pool.Get()
 	if err != nil {
 		return nil, err
 	}
-	defer us.pool.Put(ldapClient)
-	attrs, err := ldapClient.FindUser(userID)
+	defer us.pool.Put(client)
+	attrs, err := client.FindUser(userID)
 	if err != nil {
 		return nil, err
 	}
