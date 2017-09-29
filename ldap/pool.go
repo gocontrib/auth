@@ -80,6 +80,9 @@ func (p *chanPool) Get() (*ldapclient.LDAPClient, error) {
 }
 
 func isAlive(conn *ldapclient.LDAPClient) bool {
+	if conn == nil || conn.Conn == nil {
+		return false
+	}
 	_, err := conn.Conn.Search(&ldap.SearchRequest{
 		BaseDN:     "",
 		Scope:      ldap.ScopeBaseObject,
