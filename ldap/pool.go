@@ -19,14 +19,14 @@ type Pool interface {
 }
 
 func NewPool(config Config) Pool {
-	cap := config.PoolCapacity
-	if cap <= 0 {
+	capacity := config.PoolCapacity
+	if capacity <= 0 {
 		return &unlimitedPool{config}
 	}
 
 	return &chanPool{
 		config: config,
-		conns:  make(chan *ldapclient.LDAPClient, cap),
+		conns:  make(chan *ldapclient.LDAPClient, capacity),
 	}
 }
 
