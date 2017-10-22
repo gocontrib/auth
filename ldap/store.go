@@ -5,9 +5,10 @@ import (
 )
 
 type UserInfo struct {
-	ID    string
-	Name  string
-	Email string
+	ID         string
+	Name       string
+	Email      string
+	Attributes map[string]string
 }
 
 type UserStore struct {
@@ -72,8 +73,9 @@ func (us *UserStore) makeUser(id string, attrs map[string]string) *UserInfo {
 	displayName, _ := attrs[us.displayNameAttr]
 	email, _ := attrs[us.emailAttr]
 	return &UserInfo{
-		ID:    id,
-		Name:  displayName,
-		Email: email,
+		ID:         id,
+		Name:       displayName,
+		Email:      email,
+		Attributes: attrs,
 	}
 }
