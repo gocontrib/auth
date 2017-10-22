@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"fmt"
+	ldapclient "github.com/gocontrib/go-ldap-client"
 )
 
 type UserInfo struct {
@@ -15,6 +16,7 @@ type UserStore struct {
 	pool            Pool
 	displayNameAttr string
 	emailAttr       string
+	config          Config
 }
 
 func NewUserStore(pool Pool, config Config) *UserStore {
@@ -30,6 +32,7 @@ func NewUserStore(pool Pool, config Config) *UserStore {
 		pool:            pool,
 		displayNameAttr: displayNameAttr,
 		emailAttr:       emailAttr,
+		config:          config,
 	}
 }
 
@@ -46,7 +49,7 @@ func (us *UserStore) ValidateCredentials(username, password string) (*UserInfo, 
 	if !ok {
 		return nil, fmt.Errorf("ldap auth failed for user '%s'", username)
 	}
-	return us.makeUser(username, attrs), nil
+	return us.makeUser(client, username, attrs)
 }
 
 func (us *UserStore) FindUserByID(userID string) (*UserInfo, error) {
@@ -59,7 +62,7 @@ func (us *UserStore) FindUserByID(userID string) (*UserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return us.makeUser(userID, attrs), nil
+	return us.makeUser(client, userID, attrs)
 }
 
 func (us *UserStore) Close() {
@@ -69,13 +72,25 @@ func (us *UserStore) Close() {
 	}
 }
 
-func (us *UserStore) makeUser(id string, attrs map[string]string) *UserInfo {
+func (us *UserStore) makeUser(client *ldapclient.LDAPClient, id string, attrs map[string]string) (*UserInfo, error) {
+	var err error
 	displayName, _ := attrs[us.displayNameAttr]
 	email, _ := attrs[us.emailAttr]
+
+	if us.config.GetMoreUserInfo != nil {
+		var extra map[string]string
+		extra, err = us.config.GetMoreUserInfo(client, attrs)
+		if extra != nil {
+			for k, v := range extra {
+				attrs[k] = v
+			}
+		}
+	}
+
 	return &UserInfo{
 		ID:         id,
 		Name:       displayName,
 		Email:      email,
 		Attributes: attrs,
-	}
+	}, err
 }

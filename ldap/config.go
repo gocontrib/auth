@@ -1,5 +1,9 @@
 package ldap
 
+import (
+	ldapclient "github.com/gocontrib/go-ldap-client"
+)
+
 type Config struct {
 	Base               string
 	Host               string
@@ -14,4 +18,5 @@ type Config struct {
 	DisplayNameAttr    string
 	EmailAttr          string
 	PoolCapacity       int
+	GetMoreUserInfo    func(client *ldapclient.LDAPClient, attrs map[string]string) (map[string]string, error)
 }
