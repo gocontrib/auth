@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"net/http"
 	"strings"
 )
@@ -67,7 +65,7 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 	if r.Method == "GET" {
 		var token = r.URL.Query().Get(m.config.TokenKey)
 		if len(token) > 0 {
-			return m.jwtHandler(r, token)
+			return m.validateJWT(r, token)
 		}
 	}
 
@@ -90,23 +88,21 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 
 	switch scheme {
 	case schemeBasic:
-		return m.basicHandler(r, token)
+		return m.validateBasicAuth(r)
 	case schemeBearer:
-		return m.jwtHandler(r, token)
+		return m.validateJWT(r, token)
 	default:
 		return nil, errUnsupportedAuthScheme
 	}
 }
 
-func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.Context, *Error) {
-	var str, err = base64.StdEncoding.DecodeString(tokenString)
-	if err != nil {
-		return nil, errBadAuthorizationHeader.cause(err)
+func (m *middleware) validateBasicAuth(r *http.Request) (context.Context, *Error) {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return nil, errBadAuthorizationHeader
 	}
 
-	creds := bytes.SplitN(str, []byte(":"), 2)
-	userName := string(creds[0])
-	user, err := m.config.UserStore.ValidateCredentials(userName, string(creds[1]))
+	user, err := m.config.UserStore.ValidateCredentials(username, password)
 	if err != nil {
 		return nil, errBadCredentials.cause(err)
 	}
@@ -114,7 +110,7 @@ func (m *middleware) basicHandler(r *http.Request, tokenString string) (context.
 	return m.validateUser(r, user)
 }
 
-func (m *middleware) jwtHandler(r *http.Request, tokenString string) (context.Context, *Error) {
+func (m *middleware) validateJWT(r *http.Request, tokenString string) (context.Context, *Error) {
 	token, err := parseToken(m.config, tokenString, getClientIP(r), false)
 	if err != nil {
 		return nil, err
