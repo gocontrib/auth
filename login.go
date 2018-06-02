@@ -2,9 +2,10 @@ package auth
 
 import (
 	"encoding/json"
-	"github.com/gorilla/schema"
 	"mime"
 	"net/http"
+
+	"github.com/gorilla/schema"
 )
 
 var formDecoder = schema.NewDecoder()
@@ -24,8 +25,13 @@ type LoginResponse struct {
 
 func LoginHandler(config *Config) http.Handler {
 	config = config.setDefaults()
+	return http.HandlerFunc(LoginHandlerFunc(config))
+}
 
-	fn := func(w http.ResponseWriter, r *http.Request) {
+func LoginHandlerFunc(config *Config) http.HandlerFunc {
+	config = config.setDefaults()
+
+	return func(w http.ResponseWriter, r *http.Request) {
 		cred := &Credentials{}
 		err := decodePayload(w, r, cred)
 		if err != nil {
@@ -60,7 +66,6 @@ func LoginHandler(config *Config) http.Handler {
 			ExpiredAt: token.ExpiredAt,
 		})
 	}
-	return http.HandlerFunc(fn)
 }
 
 func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) error {
