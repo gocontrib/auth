@@ -74,10 +74,6 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 
 // Validates authorization header.
 func (m *middleware) validateHeader(r *http.Request, auth string) (context.Context, *Error) {
-	if len(auth) == 0 {
-		return nil, errBadAuthorizationHeader
-	}
-
 	var f = strings.Fields(auth)
 	if len(f) != 2 {
 		return nil, errBadAuthorizationHeader
