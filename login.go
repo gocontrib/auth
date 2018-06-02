@@ -32,15 +32,15 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 	config = config.setDefaults()
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		cred := &Credentials{}
-		err := decodePayload(w, r, cred)
-		if err != nil {
+		cred, err1 := decodeCredentials(w, r)
+		if err1 != nil {
+			sendError(w, err1)
 			return
 		}
 
-		user, err := config.UserStore.ValidateCredentials(cred.UserName, cred.Password)
-		if err != nil {
-			sendError(w, errBadCredentials.cause(err))
+		user, err2 := config.UserStore.ValidateCredentials(cred.UserName, cred.Password)
+		if err2 != nil {
+			sendError(w, errBadCredentials.cause(err2))
 			return
 		}
 
@@ -53,9 +53,9 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 			ClientIP:  getClientIP(r),
 		}
 
-		tokenString, error := token.Encode(config)
-		if error != nil {
-			sendError(w, error)
+		tokenString, err3 := token.Encode(config)
+		if err3 != nil {
+			sendError(w, err3)
 			return
 		}
 
@@ -68,19 +68,35 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 	}
 }
 
-func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) error {
+func decodeCredentials(w http.ResponseWriter, r *http.Request) (*Credentials, *Error) {
+	if len(r.Header.Get(authorizationHeader)) > 0 {
+		username, password, ok := r.BasicAuth()
+		if !ok {
+			return nil, errBadAuthorizationHeader
+		}
+		return &Credentials{username, password}, nil
+	}
+
+	result := &Credentials{}
+	err := decodePayload(w, r, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) *Error {
 	contentType := r.Header.Get("Content-Type")
 	mediaType, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		sendError(w, errUnsupportedContentType)
-		return err
+		return errUnsupportedContentType.cause(err)
 	}
 
 	if mediaType == contentJSON {
 		err = json.NewDecoder(r.Body).Decode(payload)
 		if err != nil {
-			sendError(w, errMalformedContent)
-			return err
+			return errMalformedContent.cause(err)
 		}
 		return nil
 	}
@@ -88,17 +104,14 @@ func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) 
 	if mediaType == contentForm {
 		err = r.ParseForm()
 		if err != nil {
-			sendError(w, errUnsupportedContentType)
-			return err
+			return errUnsupportedContentType.cause(err)
 		}
 		err = formDecoder.Decode(payload, r.PostForm)
 		if err != nil {
-			sendError(w, errMalformedContent)
-			return err
+			return errMalformedContent.cause(err)
 		}
 		return nil
 	}
 
-	sendError(w, errUnsupportedContentType)
 	return errUnsupportedContentType
 }

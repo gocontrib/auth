@@ -34,6 +34,18 @@ func TestLoginHandler_InvalidContentType(t *testing.T) {
 	c.expect.POST("/").WithText("test").Expect().Status(http.StatusUnsupportedMediaType)
 }
 
+func TestLoginHandler_BasicAuth(t *testing.T) {
+	config := makeTestConfig()
+	handler := LoginHandler(config)
+	c := makectx(t, config, httptest.NewServer(handler))
+	c.expect.POST("/").
+		WithBasicAuth("bob", "b0b").
+		Expect().
+		Status(http.StatusOK).
+		JSON().
+		Schema(loginSchema)
+}
+
 func TestLoginHandler_ValidCredentialsJSON(t *testing.T) {
 	config := makeTestConfig()
 	handler := LoginHandler(config)
