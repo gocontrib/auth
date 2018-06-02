@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -31,7 +32,8 @@ type testUserStore map[string]*testUser
 func (us testUserStore) init() {
 	for k, u := range us {
 		if len(u.ID) == 0 {
-			u.ID = uuid.NewV4().String()
+			v, _ := uuid.NewV4()
+			u.ID = v.String()
 		}
 		if len(u.Name) == 0 {
 			u.Name = k
