@@ -4,7 +4,6 @@ go:
 sudo: false
 
 script:
-  - go get -d -t ./...
   - go test -v -covermode=count -coverprofile=coverage.out
 
 after_success:
