@@ -9,7 +9,12 @@ const userKey = "user"
 
 // GetRequestUser returns authenticated user for given request
 func GetRequestUser(r *http.Request) User {
-	var i = r.Context().Value(userKey)
+	return GetContextUser(r.Context())
+}
+
+// GetContextUser returns authenticated user if it presents in given context
+func GetContextUser(c context.Context) User {
+	var i = c.Value(userKey)
 	if i == nil {
 		return nil
 	}
