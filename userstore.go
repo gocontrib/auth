@@ -1,5 +1,7 @@
 package auth
 
+import "context"
+
 type User interface {
 	GetID() string
 	GetName() string
@@ -8,7 +10,7 @@ type User interface {
 }
 
 type UserStore interface {
-	ValidateCredentials(username, password string) (User, error)
-	FindUserByID(userID string) (User, error)
+	ValidateCredentials(ctx context.Context, username, password string) (User, error)
+	FindUserByID(ctx context.Context, userID string) (User, error)
 	Close()
 }

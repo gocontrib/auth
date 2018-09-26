@@ -98,7 +98,7 @@ func (m *middleware) validateBasicAuth(r *http.Request) (context.Context, *Error
 		return nil, errBadAuthorizationHeader
 	}
 
-	user, err := m.config.UserStore.ValidateCredentials(username, password)
+	user, err := m.config.UserStore.ValidateCredentials(r.Context(), username, password)
 	if err != nil {
 		return nil, errBadCredentials.cause(err)
 	}
@@ -112,7 +112,7 @@ func (m *middleware) validateJWT(r *http.Request, tokenString string) (context.C
 		return nil, err
 	}
 
-	user, error := m.config.UserStore.FindUserByID(token.UserID)
+	user, error := m.config.UserStore.FindUserByID(r.Context(), token.UserID)
 	if error != nil {
 		return nil, errUserNotFound.cause(error)
 	}

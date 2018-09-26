@@ -38,7 +38,7 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 			return
 		}
 
-		user, err2 := config.UserStore.ValidateCredentials(cred.UserName, cred.Password)
+		user, err2 := config.UserStore.ValidateCredentials(r.Context(), cred.UserName, cred.Password)
 		if err2 != nil {
 			sendError(w, errBadCredentials.cause(err2))
 			return
