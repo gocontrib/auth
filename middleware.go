@@ -125,7 +125,7 @@ func (m *middleware) validateUser(r *http.Request, user User) (context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	return withUser(r.Context(), user), nil
+	return WithUser(r.Context(), user), nil
 }
 
 func (m *middleware) checkUser(user User) *Error {

@@ -16,6 +16,7 @@ func GetRequestUser(r *http.Request) User {
 	return i.(User)
 }
 
-func withUser(parent context.Context, user User) context.Context {
+// WithUser returns new context with given user
+func WithUser(parent context.Context, user User) context.Context {
 	return context.WithValue(parent, userKey, user)
 }
