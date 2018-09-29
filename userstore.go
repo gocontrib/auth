@@ -16,7 +16,7 @@ type UserStore interface {
 	Close()
 }
 
-type StdUser struct {
+type UserInfo struct {
 	ID     string
 	Name   string
 	Email  string
@@ -24,22 +24,22 @@ type StdUser struct {
 	Claims map[string]interface{}
 }
 
-func (u *StdUser) GetID() string {
+func (u *UserInfo) GetID() string {
 	return u.ID
 }
 
-func (u *StdUser) GetName() string {
+func (u *UserInfo) GetName() string {
 	return u.Name
 }
 
-func (u *StdUser) GetEmail() string {
+func (u *UserInfo) GetEmail() string {
 	return u.Email
 }
 
-func (u *StdUser) IsAdmin() bool {
+func (u *UserInfo) IsAdmin() bool {
 	return u.Admin
 }
 
-func (u *StdUser) GetClaims() map[string]interface{} {
+func (u *UserInfo) GetClaims() map[string]interface{} {
 	return u.Claims
 }

@@ -34,7 +34,7 @@ func (us *ldapStore) FindUserByID(ctx context.Context, userID string) (User, err
 
 func (us *ldapStore) makeUser(info *ldap.UserInfo) User {
 	// TODO determine user role
-	return &StdUser{
+	return &UserInfo{
 		ID:    info.ID,
 		Name:  info.Name,
 		Email: info.Email,
