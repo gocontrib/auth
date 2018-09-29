@@ -1,13 +1,15 @@
 package auth
 
 import (
+	"context"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/gavv/httpexpect.v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/gavv/httpexpect.v1"
 )
 
 func TestBasicAuth_NoCredentials(t *testing.T) {
@@ -67,7 +69,8 @@ type C struct {
 }
 
 func (c *C) makeToken(username, password string) string {
-	user, err := c.config.UserStore.ValidateCredentials(username, password)
+	ctx := context.Background()
+	user, err := c.config.UserStore.ValidateCredentials(ctx, username, password)
 	assert.Nil(c, err)
 	assert.NotNil(c, user)
 	issuedAt := now()
@@ -76,6 +79,7 @@ func (c *C) makeToken(username, password string) string {
 		UserName:  user.GetName(),
 		IssuedAt:  Timestamp(issuedAt),
 		ExpiredAt: Timestamp(issuedAt.Add(c.config.TokenExpiration)),
+		Claims:    user.GetClaims(),
 	}
 	result, err := token.Encode(c.config)
 	assert.Nil(c, err)

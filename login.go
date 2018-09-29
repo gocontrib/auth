@@ -51,6 +51,7 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 			IssuedAt:  Timestamp(issuedAt),
 			ExpiredAt: Timestamp(issuedAt.Add(config.TokenExpiration)),
 			ClientIP:  getClientIP(r),
+			Claims:    user.GetClaims(),
 		}
 
 		tokenString, err3 := token.Encode(config)

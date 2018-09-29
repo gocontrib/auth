@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func defaultConfig() *Config {
@@ -18,6 +19,9 @@ func TestParseValidToken(t *testing.T) {
 		IssuedAt:  Timestamp(now()),
 		ExpiredAt: Timestamp(now().Add(time.Hour)),
 		ClientIP:  "127.0.0.1",
+		Claims: map[string]interface{}{
+			"role": "admin",
+		},
 	}
 	str, err := token.Encode(config)
 	assert.Nil(t, err)

@@ -7,13 +7,14 @@ import (
 )
 
 type Token struct {
-	UserID    string    `json:"user_id"`
-	UserName  string    `json:"user_name"`
-	Domain    string    `json:"domain"`
-	IssuedAt  Timestamp `json:"issued_at"`
-	ExpiredAt Timestamp `json:"expired_at"`
-	Issuer    string    `json:"issuer"`
-	ClientIP  string    `json:"client_ip"`
+	UserID    string                 `json:"user_id"`
+	UserName  string                 `json:"user_name"`
+	Domain    string                 `json:"domain"`
+	IssuedAt  Timestamp              `json:"issued_at"`
+	ExpiredAt Timestamp              `json:"expired_at"`
+	Issuer    string                 `json:"issuer"`
+	ClientIP  string                 `json:"client_ip"`
+	Claims    map[string]interface{} `json:"claims"` // custom claims
 }
 
 func (t *Token) Encode(config *Config) (string, *Error) {
@@ -21,17 +22,27 @@ func (t *Token) Encode(config *Config) (string, *Error) {
 	if len(issuer) == 0 {
 		issuer = getIssuer()
 	}
-	claims := jwt.MapClaims{
-		"iss":       issuer,
-		"iat":       now().Unix(), // issued_at
-		"user_id":   t.UserID,
-		"user_name": t.UserName,
-		"domain":    t.Domain,
-		"exp":       t.ExpiredAt.Unix(),
+
+	claims := jwt.MapClaims{}
+
+	if t.Claims != nil {
+		for k, v := range t.Claims {
+			claims[k] = v
+		}
 	}
+
+	// standard claims
+	claims["iss"] = issuer
+	claims["iat"] = now().Unix() // issued_at
+	claims["user_id"] = t.UserID
+	claims["user_name"] = t.UserName
+	claims["domain"] = t.Domain
+	claims["exp"] = t.ExpiredAt.Unix()
+
 	if len(t.ClientIP) > 0 {
 		claims["aud"] = t.ClientIP
 	}
+
 	return encodeToken(claims, config)
 }
 

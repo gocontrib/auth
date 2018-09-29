@@ -33,7 +33,8 @@ func (us *ldapStore) FindUserByID(ctx context.Context, userID string) (User, err
 }
 
 func (us *ldapStore) makeUser(info *ldap.UserInfo) User {
-	return &ldapUser{
+	// TODO determine user role
+	return &StdUser{
 		ID:    info.ID,
 		Name:  info.Name,
 		Email: info.Email,
@@ -42,26 +43,4 @@ func (us *ldapStore) makeUser(info *ldap.UserInfo) User {
 
 func (us *ldapStore) Close() {
 	us.store.Close()
-}
-
-type ldapUser struct {
-	ID    string
-	Name  string
-	Email string
-}
-
-func (u *ldapUser) GetID() string {
-	return u.ID
-}
-
-func (u *ldapUser) GetName() string {
-	return u.Name
-}
-
-func (u *ldapUser) GetEmail() string {
-	return u.Email
-}
-
-func (u *ldapUser) IsAdmin() bool {
-	return false
 }

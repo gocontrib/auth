@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -44,7 +45,7 @@ func (us testUserStore) init() {
 	}
 }
 
-func (us testUserStore) ValidateCredentials(username, password string) (User, error) {
+func (us testUserStore) ValidateCredentials(ctx context.Context, username, password string) (User, error) {
 	u, ok := us[username]
 	if !ok {
 		return nil, errors.New("user not found")
@@ -55,7 +56,7 @@ func (us testUserStore) ValidateCredentials(username, password string) (User, er
 	return u, nil
 }
 
-func (us testUserStore) FindUserByID(userID string) (User, error) {
+func (us testUserStore) FindUserByID(ctx context.Context, userID string) (User, error) {
 	for _, u := range us {
 		if u.ID == userID {
 			return u, nil
@@ -68,11 +69,12 @@ func (us testUserStore) Close() {
 }
 
 type testUser struct {
-	ID    string
-	Name  string
-	Email string
-	Pwd   string
-	Admin bool
+	ID     string
+	Name   string
+	Email  string
+	Pwd    string
+	Admin  bool
+	Claims map[string]interface{}
 }
 
 func (u *testUser) GetID() string {
@@ -89,4 +91,8 @@ func (u *testUser) GetEmail() string {
 
 func (u *testUser) IsAdmin() bool {
 	return u.Admin
+}
+
+func (u *testUser) GetClaims() map[string]interface{} {
+	return u.Claims
 }
