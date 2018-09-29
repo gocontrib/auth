@@ -3,7 +3,10 @@ package auth
 func makeTestConfig() *Config {
 	store := makeTestUserStore()
 
-	return &Config{
+	config := &Config{
 		UserStore: store,
 	}
+	config.setDefaults()
+
+	return config
 }

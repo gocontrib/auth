@@ -70,20 +70,24 @@ type C struct {
 
 func (c *C) makeToken(username, password string) string {
 	ctx := context.Background()
+
 	user, err := c.config.UserStore.ValidateCredentials(ctx, username, password)
 	assert.Nil(c, err)
 	assert.NotNil(c, user)
-	issuedAt := now()
+
+	now := now()
 	token := &Token{
 		UserID:    user.GetID(),
 		UserName:  user.GetName(),
-		IssuedAt:  Timestamp(issuedAt),
-		ExpiredAt: Timestamp(issuedAt.Add(c.config.TokenExpiration)),
+		IssuedAt:  Timestamp(now),
+		ExpiredAt: Timestamp(now.Add(c.config.TokenExpiration)),
 		Claims:    user.GetClaims(),
 	}
+
 	result, err := token.Encode(c.config)
 	assert.Nil(c, err)
 	assert.NotEmpty(c, result)
+
 	return result
 }
 

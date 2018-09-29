@@ -44,7 +44,7 @@ func (c *Config) setDefaults() *Config {
 		c.TokenKey = defaultTokenKey
 	}
 	if len(c.TokenCookie) == 0 {
-		c.TokenKey = defaultTokenCookie
+		c.TokenCookie = defaultTokenCookie
 	}
 	if c.SingingMethod == nil {
 		c.SingingMethod = defaultSingingMethod
