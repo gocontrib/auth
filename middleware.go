@@ -61,12 +61,15 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 		return m.validateHeader(r, h)
 	}
 
-	// auth token as part of url
-	if r.Method == "GET" {
-		var token = r.URL.Query().Get(m.config.TokenKey)
-		if len(token) > 0 {
-			return m.validateJWT(r, token)
-		}
+	cookie, err := r.Cookie(m.config.TokenCookie)
+	if err == nil && cookie != nil {
+		return m.validateJWT(r, cookie.Value)
+	}
+
+	// from query string
+	token := r.URL.Query().Get(m.config.TokenKey)
+	if len(token) > 0 {
+		return m.validateJWT(r, token)
 	}
 
 	return nil, errBadAuthorizationHeader

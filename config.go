@@ -1,16 +1,22 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gocontrib/parse"
 	"github.com/gorilla/securecookie"
-	"time"
 )
 
-const defaultTokenKey = "auth_token"
+const (
+	defaultTokenKey    = "token"
+	defaultTokenCookie = "jwt_token"
+)
 
-var defaultSingingMethod = jwt.SigningMethodHS256
-var defaultSecretKey = securecookie.GenerateRandomKey(32)
+var (
+	defaultSingingMethod = jwt.SigningMethodHS256
+	defaultSecretKey     = securecookie.GenerateRandomKey(32)
+)
 
 // Config defines options for authentication middleware.
 type Config struct {
@@ -19,6 +25,9 @@ type Config struct {
 
 	// TokenKey specifies name of token field to extract from query string
 	TokenKey string
+
+	// TokenCookie specifies cookie name to extract from cookies
+	TokenCookie string
 
 	// SingingMethod specifies JWT signing method
 	SingingMethod jwt.SigningMethod
@@ -33,6 +42,9 @@ type Config struct {
 func (c *Config) setDefaults() *Config {
 	if len(c.TokenKey) == 0 {
 		c.TokenKey = defaultTokenKey
+	}
+	if len(c.TokenCookie) == 0 {
+		c.TokenKey = defaultTokenCookie
 	}
 	if c.SingingMethod == nil {
 		c.SingingMethod = defaultSingingMethod
