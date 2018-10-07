@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -50,7 +51,12 @@ func (c *Config) setDefaults() *Config {
 		c.SingingMethod = defaultSingingMethod
 	}
 	if c.SecretKey == nil {
-		c.SecretKey = defaultSecretKey
+		s := os.Getenv("JWT_SECRET")
+		if len(s) > 0 {
+			c.SecretKey = []byte(s)
+		} else {
+			c.SecretKey = defaultSecretKey
+		}
 	}
 	if c.TokenExpiration.Nanoseconds() == 0 {
 		c.TokenExpiration = parse.MustDuration("7d")
