@@ -50,7 +50,7 @@ func encodeToken(claims jwt.Claims, config *Config) (string, *Error) {
 	token := jwt.NewWithClaims(config.SingingMethod, claims)
 	str, err := token.SignedString(config.SecretKey)
 	if err != nil {
-		return "", errEncodeTokenFailed.cause(err)
+		return "", ErrEncodeTokenFailed.WithCause(err)
 	}
 	return str, nil
 }
@@ -64,32 +64,32 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		return config.SecretKey, nil
 	})
 	if err != nil {
-		return nil, errInvalidToken.cause(err)
+		return nil, ErrInvalidToken.WithCause(err)
 	}
 	if !token.Valid {
-		return nil, errInvalidToken
+		return nil, ErrInvalidToken
 	}
 
 	issuer := getString(claims, "iss")
 	if !claims.VerifyIssuer(issuer, true) {
-		return nil, errInvalidIssuer
+		return nil, ErrInvalidIssuer
 	}
 
 	clientIP := getString(claims, "aud")
 	if len(expectedAudience) > 0 && len(clientIP) > 0 && clientIP != expectedAudience {
-		return nil, errInvalidClientIP
+		return nil, ErrInvalidClientIP
 	}
 
 	// check required fields
 	userID := getString(claims, "user_id")
 	userName := getString(claims, "user_name")
 	if len(userID) == 0 {
-		return nil, errInvalidToken
+		return nil, ErrInvalidToken
 	}
 
 	exp := getTime(claims, "exp")
 	if exp == nil {
-		return nil, errInvalidToken
+		return nil, ErrInvalidToken
 	}
 
 	issuedAt := getTime(claims, "iat")

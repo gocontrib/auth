@@ -34,13 +34,13 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cred, err1 := decodeCredentials(w, r)
 		if err1 != nil {
-			sendError(w, err1)
+			SendError(w, err1)
 			return
 		}
 
 		user, err2 := config.UserStore.ValidateCredentials(r.Context(), cred.UserName, cred.Password)
 		if err2 != nil {
-			sendError(w, errBadCredentials.cause(err2))
+			SendError(w, ErrBadCredentials.WithCause(err2))
 			return
 		}
 
@@ -56,11 +56,11 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 
 		tokenString, err3 := token.Encode(config)
 		if err3 != nil {
-			sendError(w, err3)
+			SendError(w, err3)
 			return
 		}
 
-		sendJSON(w, &LoginResponse{
+		SendJSON(w, &LoginResponse{
 			Token:     tokenString,
 			UserID:    token.UserID,
 			UserName:  token.UserName,
@@ -73,7 +73,7 @@ func decodeCredentials(w http.ResponseWriter, r *http.Request) (*Credentials, *E
 	if len(r.Header.Get(authorizationHeader)) > 0 {
 		username, password, ok := r.BasicAuth()
 		if !ok {
-			return nil, errBadAuthorizationHeader
+			return nil, ErrBadAuthorizationHeader
 		}
 		return &Credentials{username, password}, nil
 	}
@@ -91,13 +91,13 @@ func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) 
 	contentType := r.Header.Get("Content-Type")
 	mediaType, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		return errUnsupportedContentType.cause(err)
+		return ErrUnsupportedContentType.WithCause(err)
 	}
 
 	if mediaType == contentJSON {
 		err = json.NewDecoder(r.Body).Decode(payload)
 		if err != nil {
-			return errMalformedContent.cause(err)
+			return ErrMalformedContent.WithCause(err)
 		}
 		return nil
 	}
@@ -105,14 +105,14 @@ func decodePayload(w http.ResponseWriter, r *http.Request, payload interface{}) 
 	if mediaType == contentForm {
 		err = r.ParseForm()
 		if err != nil {
-			return errUnsupportedContentType.cause(err)
+			return ErrUnsupportedContentType.WithCause(err)
 		}
 		err = formDecoder.Decode(payload, r.PostForm)
 		if err != nil {
-			return errMalformedContent.cause(err)
+			return ErrMalformedContent.WithCause(err)
 		}
 		return nil
 	}
 
-	return errUnsupportedContentType
+	return ErrUnsupportedContentType
 }

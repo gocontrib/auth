@@ -70,13 +70,13 @@ func getTime(data map[string]interface{}, key string) *time.Time {
 	}
 }
 
-func sendError(w http.ResponseWriter, err *Error) {
+func SendError(w http.ResponseWriter, err *Error) {
 	w.Header().Set("Content-Type", contentJSON)
 	w.WriteHeader(err.Status)
-	sendJSON(w, err)
+	SendJSON(w, err)
 }
 
-func sendJSON(w http.ResponseWriter, result interface{}) {
+func SendJSON(w http.ResponseWriter, result interface{}) {
 	w.Header().Set("Content-Type", contentJSON)
 
 	marshaller, ok := result.(json.Marshaler)

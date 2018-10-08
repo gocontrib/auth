@@ -50,7 +50,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		m.next.ServeHTTP(w, r)
 	} else {
-		sendError(w, err)
+		SendError(w, err)
 	}
 }
 
@@ -72,14 +72,14 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 		return m.validateJWT(r, token)
 	}
 
-	return nil, errBadAuthorizationHeader
+	return nil, ErrBadAuthorizationHeader
 }
 
 // Validates authorization header.
 func (m *middleware) validateHeader(r *http.Request, auth string) (context.Context, *Error) {
 	var f = strings.Fields(auth)
 	if len(f) != 2 {
-		return nil, errBadAuthorizationHeader
+		return nil, ErrBadAuthorizationHeader
 	}
 
 	var scheme = strings.ToLower(f[0])
@@ -91,19 +91,19 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 	case schemeBearer:
 		return m.validateJWT(r, token)
 	default:
-		return nil, errUnsupportedAuthScheme
+		return nil, ErrUnsupportedAuthScheme
 	}
 }
 
 func (m *middleware) validateBasicAuth(r *http.Request) (context.Context, *Error) {
 	username, password, ok := r.BasicAuth()
 	if !ok {
-		return nil, errBadAuthorizationHeader
+		return nil, ErrBadAuthorizationHeader
 	}
 
 	user, err := m.config.UserStore.ValidateCredentials(r.Context(), username, password)
 	if err != nil {
-		return nil, errBadCredentials.cause(err)
+		return nil, ErrBadCredentials.WithCause(err)
 	}
 
 	return m.validateUser(r, user)
@@ -117,7 +117,7 @@ func (m *middleware) validateJWT(r *http.Request, tokenString string) (context.C
 
 	user, error := m.config.UserStore.FindUserByID(r.Context(), token.UserID)
 	if error != nil {
-		return nil, errUserNotFound.cause(error)
+		return nil, ErrUserNotFound.WithCause(error)
 	}
 
 	return m.validateUser(r, user)
@@ -133,7 +133,7 @@ func (m *middleware) validateUser(r *http.Request, user User) (context.Context, 
 
 func (m *middleware) checkUser(user User) *Error {
 	if m.requireAdmin && !user.IsAdmin() {
-		return errNotAdmin
+		return ErrNotAdmin
 	}
 	return nil
 }
