@@ -44,29 +44,33 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 			return
 		}
 
-		issuedAt := now()
-		token := &Token{
-			UserID:    user.GetID(),
-			UserName:  user.GetName(),
-			IssuedAt:  Timestamp(issuedAt),
-			ExpiredAt: Timestamp(issuedAt.Add(config.TokenExpiration)),
-			ClientIP:  getClientIP(r),
-			Claims:    user.GetClaims(),
-		}
-
-		tokenString, err3 := token.Encode(config)
-		if err3 != nil {
-			SendError(w, err3)
-			return
-		}
-
-		SendJSON(w, &LoginResponse{
-			Token:     tokenString,
-			UserID:    token.UserID,
-			UserName:  token.UserName,
-			ExpiredAt: token.ExpiredAt,
-		})
+		WriteLoginResponse(w, r, config, user)
 	}
+}
+
+func WriteLoginResponse(w http.ResponseWriter, r *http.Request, config *Config, user User) {
+	issuedAt := now()
+	token := &Token{
+		UserID:    user.GetID(),
+		UserName:  user.GetName(),
+		IssuedAt:  Timestamp(issuedAt),
+		ExpiredAt: Timestamp(issuedAt.Add(config.TokenExpiration)),
+		ClientIP:  getClientIP(r),
+		Claims:    user.GetClaims(),
+	}
+
+	tokenString, err3 := token.Encode(config)
+	if err3 != nil {
+		SendError(w, err3)
+		return
+	}
+
+	SendJSON(w, &LoginResponse{
+		Token:     tokenString,
+		UserID:    token.UserID,
+		UserName:  token.UserName,
+		ExpiredAt: token.ExpiredAt,
+	})
 }
 
 func decodeCredentials(w http.ResponseWriter, r *http.Request) (*Credentials, *Error) {
