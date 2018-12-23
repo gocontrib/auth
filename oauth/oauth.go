@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-chi/chi"
 	"github.com/gocontrib/auth"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
@@ -49,7 +48,11 @@ func makeProvider(provider string) goth.Provider {
 	panic("invalid provider")
 }
 
-func OAuthAPI(mux chi.Router, config *auth.Config) {
+type Router interface {
+	Get(pattern string, h http.HandlerFunc)
+}
+
+func RegisterAPI(mux Router, config *auth.Config) {
 	userStore := config.UserStoreEx
 	if userStore == nil {
 		return
