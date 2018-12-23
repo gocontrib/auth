@@ -22,7 +22,8 @@ var (
 // Config defines options for authentication middleware.
 type Config struct {
 	// UserStore to validate credentials
-	UserStore UserStore
+	UserStore   UserStore
+	UserStoreEx UserStoreEx
 
 	// TokenKey specifies name of token field to extract from query string
 	TokenKey string

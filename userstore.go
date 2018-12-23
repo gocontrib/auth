@@ -1,6 +1,10 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"github.com/markbates/goth"
+)
 
 type User interface {
 	GetID() string
@@ -14,6 +18,11 @@ type UserStore interface {
 	ValidateCredentials(ctx context.Context, username, password string) (User, error)
 	FindUserByID(ctx context.Context, userID string) (User, error)
 	Close()
+}
+
+type UserStoreEx interface {
+	FindUserByEmail(ctx context.Context, userID string) (User, error)
+	CreateUser(ctx context.Context, account goth.User) (User, error)
 }
 
 type UserInfo struct {
