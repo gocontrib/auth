@@ -48,9 +48,9 @@ func LoginHandlerFunc(config *Config) http.HandlerFunc {
 	}
 }
 
-func WriteLoginResponse(w http.ResponseWriter, r *http.Request, config *Config, user User) {
+func MakeToken(r *http.Request, config *Config, user User) *Token {
 	issuedAt := now()
-	token := &Token{
+	return &Token{
 		UserID:    user.GetID(),
 		UserName:  user.GetName(),
 		IssuedAt:  Timestamp(issuedAt),
@@ -58,6 +58,10 @@ func WriteLoginResponse(w http.ResponseWriter, r *http.Request, config *Config, 
 		ClientIP:  getClientIP(r),
 		Claims:    user.GetClaims(),
 	}
+}
+
+func WriteLoginResponse(w http.ResponseWriter, r *http.Request, config *Config, user User) {
+	token := MakeToken(r, config, user)
 
 	tokenString, err3 := token.Encode(config)
 	if err3 != nil {

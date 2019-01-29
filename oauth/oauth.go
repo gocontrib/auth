@@ -7,15 +7,18 @@ import (
 	"strings"
 
 	"github.com/gocontrib/auth"
+	"github.com/gocontrib/request"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/facebook"
+	"github.com/markbates/goth/providers/vk"
 )
 
 // TODO support more providers
 func init() {
 	providers := filterNilProviders([]goth.Provider{
 		makeProvider("facebook"),
+		makeProvider("vk"),
 	})
 	goth.UseProviders(providers...)
 }
@@ -44,6 +47,8 @@ func makeProvider(provider string) goth.Provider {
 	switch provider {
 	case "facebook":
 		return facebook.New(key, secret, callback)
+	case "vk":
+		return vk.New(key, secret, callback)
 	}
 	panic("invalid provider")
 }
@@ -92,6 +97,7 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 
 	user, err := userStore.FindUserByEmail(ctx, account.Email)
 	if err != nil {
+		// create user and link with external account
 		user, err = userStore.CreateUser(ctx, account)
 		if err != nil {
 			fmt.Fprintln(w, err)
@@ -99,7 +105,14 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 		}
 	}
 
-	// TODO link external account to the user
+	token := auth.MakeToken(r, config, user)
+	tokenString, err3 := token.Encode(config)
+	if err3 != nil {
+		auth.SendError(w, err3)
+		return
+	}
 
-	auth.WriteLoginResponse(w, r, config, user)
+	request.SetCookie(w, r, config.TokenCookie, tokenString)
+
+	// TODO redirect to return_url
 }
