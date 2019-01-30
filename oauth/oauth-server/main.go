@@ -14,6 +14,7 @@ import (
 	"github.com/gocontrib/auth/oauth"
 	"github.com/gocontrib/request"
 	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/vk"
 )
 
 var port int64 = 3131
@@ -61,6 +62,7 @@ func makeAPIHandler() http.Handler {
 		fmt.Fprintf(w, "token: %s\n", token)
 	})
 
+	oauth.WithProviders(authConfig, "vk", vk.New)
 	oauth.RegisterAPI(r, authConfig)
 
 	return r

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -12,34 +13,45 @@ import (
 	"github.com/gocontrib/request"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/facebook"
-	"github.com/markbates/goth/providers/vk"
 )
 
-// TODO support more providers
-func initProviders(config *auth.Config) {
-	providers := filterNilProviders([]goth.Provider{
-		makeProvider(config, "facebook"),
-		makeProvider(config, "vk"),
-	})
-	if len(providers) > 0 {
-		goth.UseProviders(providers...)
+type providerFactory = func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider
+
+func WithProviders(config *auth.Config, providers ...interface{}) {
+	var gothProviders []goth.Provider
+	for i := 0; i+1 < len(providers); i++ {
+		name := providers[i].(string)
+		factory := makeProviderFactory(providers[i+1])
+		provider := makeProvider(config, name, factory)
+		if provider != nil {
+			gothProviders = append(gothProviders, provider)
+		}
+	}
+	if len(gothProviders) > 0 {
+		goth.UseProviders(gothProviders...)
 	} else {
 		log.Warning("no oauth providers")
 	}
 }
 
-func filterNilProviders(in []goth.Provider) []goth.Provider {
-	var out []goth.Provider
-	for _, v := range in {
-		if v != nil {
-			out = append(out, v)
+func makeProviderFactory(v interface{}) providerFactory {
+	return func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider {
+		f := reflect.ValueOf(v)
+		// f := reflect.FuncOf(v)
+		args := []reflect.Value{
+			reflect.ValueOf(clientKey),
+			reflect.ValueOf(secret),
+			reflect.ValueOf(callbackURL),
 		}
+		for _, scope := range scopes {
+			args = append(args, reflect.ValueOf(scope))
+		}
+		result := f.Call(args)
+		return result[0].Interface().(goth.Provider)
 	}
-	return out
 }
 
-func makeProvider(config *auth.Config, provider string) goth.Provider {
+func makeProvider(config *auth.Config, provider string, factory providerFactory) goth.Provider {
 	p := strings.ToUpper(provider)
 	key := os.Getenv(p + "_KEY")
 	secret := os.Getenv(p + "_SECRET")
@@ -52,13 +64,8 @@ func makeProvider(config *auth.Config, provider string) goth.Provider {
 	callbackURL := baseURL + "/api/oauth/callback/" + provider
 	log.Debug("%s callback: %s\n", provider, callbackURL)
 
-	switch provider {
-	case "facebook":
-		return facebook.New(key, secret, callbackURL)
-	case "vk":
-		return vk.New(key, secret, callbackURL)
-	}
-	panic("invalid provider")
+	// TODO support scopes via env
+	return factory(key, secret, callbackURL)
 }
 
 func getBaseURL(config *auth.Config) string {
@@ -86,8 +93,6 @@ func RegisterAPI(mux Router, config *auth.Config) {
 	if userStore == nil {
 		return
 	}
-
-	initProviders(config)
 
 	defaultGetProviderName := gothic.GetProviderName
 	gothic.GetProviderName = func(r *http.Request) (string, error) {
