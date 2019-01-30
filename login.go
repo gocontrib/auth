@@ -24,12 +24,12 @@ type LoginResponse struct {
 }
 
 func LoginHandler(config *Config) http.Handler {
-	config = config.setDefaults()
+	config = config.SetDefaults()
 	return http.HandlerFunc(LoginHandlerFunc(config))
 }
 
 func LoginHandlerFunc(config *Config) http.HandlerFunc {
-	config = config.setDefaults()
+	config = config.SetDefaults()
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		cred, err1 := decodeCredentials(w, r)

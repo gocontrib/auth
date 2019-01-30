@@ -10,16 +10,16 @@ import (
 
 func makeTestUserStore() testUserStore {
 	store := testUserStore{
-		"bob": &testUser{
+		"bob": &UserInfo{
 			Pwd: "b0b",
 		},
-		"rob": &testUser{
+		"rob": &UserInfo{
 			Pwd: "r0b",
 		},
-		"joe": &testUser{
+		"joe": &UserInfo{
 			Pwd: "j0e",
 		},
-		"admin": &testUser{
+		"admin": &UserInfo{
 			Pwd:   "admin",
 			Admin: true,
 		},
@@ -28,7 +28,7 @@ func makeTestUserStore() testUserStore {
 	return store
 }
 
-type testUserStore map[string]*testUser
+type testUserStore map[string]*UserInfo
 
 func (us testUserStore) init() {
 	for k, u := range us {
@@ -66,33 +66,4 @@ func (us testUserStore) FindUserByID(ctx context.Context, userID string) (User, 
 }
 
 func (us testUserStore) Close() {
-}
-
-type testUser struct {
-	ID     string
-	Name   string
-	Email  string
-	Pwd    string
-	Admin  bool
-	Claims map[string]interface{}
-}
-
-func (u *testUser) GetID() string {
-	return u.ID
-}
-
-func (u *testUser) GetName() string {
-	return u.Name
-}
-
-func (u *testUser) GetEmail() string {
-	return u.Email
-}
-
-func (u *testUser) IsAdmin() bool {
-	return u.Admin
-}
-
-func (u *testUser) GetClaims() map[string]interface{} {
-	return u.Claims
 }

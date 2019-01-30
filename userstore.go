@@ -31,6 +31,7 @@ type UserInfo struct {
 	Email  string
 	Admin  bool
 	Claims map[string]interface{}
+	Pwd    string // for testing purposes
 }
 
 func (u *UserInfo) GetID() string {

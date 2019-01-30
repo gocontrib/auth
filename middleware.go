@@ -14,7 +14,7 @@ const (
 
 // RequireUser creates auth middleware with given configuration.
 func RequireUser(config *Config) func(http.Handler) http.Handler {
-	config = config.setDefaults()
+	config = config.SetDefaults()
 	return func(next http.Handler) http.Handler {
 		return &middleware{
 			config: config,
@@ -25,7 +25,7 @@ func RequireUser(config *Config) func(http.Handler) http.Handler {
 
 // RequireAdmin creates auth middleware that authenticates only admin users.
 func RequireAdmin(config *Config) func(http.Handler) http.Handler {
-	config = config.setDefaults()
+	config = config.SetDefaults()
 	return func(next http.Handler) http.Handler {
 		return &middleware{
 			config:       config,

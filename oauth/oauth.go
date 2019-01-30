@@ -6,7 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-chi/chi"
 	"github.com/gocontrib/auth"
+	"github.com/gocontrib/log"
 	"github.com/gocontrib/request"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
@@ -15,12 +17,16 @@ import (
 )
 
 // TODO support more providers
-func init() {
+func initProviders(config *auth.Config) {
 	providers := filterNilProviders([]goth.Provider{
-		makeProvider("facebook"),
-		makeProvider("vk"),
+		makeProvider(config, "facebook"),
+		makeProvider(config, "vk"),
 	})
-	goth.UseProviders(providers...)
+	if len(providers) > 0 {
+		goth.UseProviders(providers...)
+	} else {
+		log.Warning("no oauth providers")
+	}
 }
 
 func filterNilProviders(in []goth.Provider) []goth.Provider {
@@ -33,24 +39,40 @@ func filterNilProviders(in []goth.Provider) []goth.Provider {
 	return out
 }
 
-func makeProvider(provider string) goth.Provider {
-	// TODO get host from config
-	host := "http://localhost:4201"
-	callback := host + "/api/oauth/callback/" + provider
+func makeProvider(config *auth.Config, provider string) goth.Provider {
 	p := strings.ToUpper(provider)
 	key := os.Getenv(p + "_KEY")
 	secret := os.Getenv(p + "_SECRET")
 	if len(key) == 0 || len(secret) == 0 {
+		log.Warning("%s has no keys\n", provider)
 		return nil
 	}
 
+	baseURL := strings.TrimRight(getBaseURL(config), "/")
+	callbackURL := baseURL + "/api/oauth/callback/" + provider
+	log.Debug("%s callback: %s\n", provider, callbackURL)
+
 	switch provider {
 	case "facebook":
-		return facebook.New(key, secret, callback)
+		return facebook.New(key, secret, callbackURL)
 	case "vk":
-		return vk.New(key, secret, callback)
+		return vk.New(key, secret, callbackURL)
 	}
 	panic("invalid provider")
+}
+
+func getBaseURL(config *auth.Config) string {
+	if len(config.ServerURL) > 0 {
+		return config.ServerURL
+	}
+	if config.ServerPort != 0 {
+		return fmt.Sprintf("http://localhost:%d", config.ServerPort)
+	}
+	hostname, err := os.Hostname()
+	if err == nil {
+		return fmt.Sprintf("http://%s", hostname)
+	}
+	return "http://localhost:4200"
 }
 
 type Router interface {
@@ -58,12 +80,25 @@ type Router interface {
 }
 
 func RegisterAPI(mux Router, config *auth.Config) {
+	config = config.SetDefaults()
+
 	userStore := config.UserStoreEx
 	if userStore == nil {
 		return
 	}
 
-	mux.Get("/api/oauth/login/:provider", func(w http.ResponseWriter, r *http.Request) {
+	initProviders(config)
+
+	defaultGetProviderName := gothic.GetProviderName
+	gothic.GetProviderName = func(r *http.Request) (string, error) {
+		providerName := chi.URLParam(r, "provider")
+		if len(providerName) > 0 {
+			return providerName, nil
+		}
+		return defaultGetProviderName(r)
+	}
+
+	mux.Get("/api/oauth/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		// try to get the user without re-authenticating
 		if user, err := gothic.CompleteUserAuth(w, r); err == nil {
 			completeOAuthFlow(w, r, config, user)
@@ -72,13 +107,13 @@ func RegisterAPI(mux Router, config *auth.Config) {
 		}
 	})
 
-	mux.Get("/api/oauth/logout/:provider", func(w http.ResponseWriter, r *http.Request) {
+	mux.Get("/api/oauth/logout/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		gothic.Logout(w, r)
 		w.Header().Set("Location", "/")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
 
-	mux.Get("/api/oauth/callback/:provider", func(w http.ResponseWriter, r *http.Request) {
+	mux.Get("/api/oauth/callback/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		user, err := gothic.CompleteUserAuth(w, r)
 		if err != nil {
 			fmt.Fprintln(w, err)
