@@ -6,7 +6,7 @@ func makeTestConfig() *Config {
 	config := &Config{
 		UserStore: store,
 	}
-	config.setDefaults()
+	config.SetDefaults()
 
 	return config
 }

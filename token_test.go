@@ -8,7 +8,7 @@ import (
 )
 
 func defaultConfig() *Config {
-	return (&Config{}).setDefaults()
+	return (&Config{}).SetDefaults()
 }
 
 func TestParseValidToken(t *testing.T) {
