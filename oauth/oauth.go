@@ -138,7 +138,24 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 	user, err := userStore.FindUserByEmail(ctx, account.Email)
 	if err != nil {
 		// create user and link with external account
-		user, err = userStore.CreateUser(ctx, account)
+		data := auth.UserData{
+			RawData:           account.RawData,
+			Provider:          account.Provider,
+			Email:             account.Email,
+			Name:              account.Name,
+			FirstName:         account.FirstName,
+			LastName:          account.LastName,
+			NickName:          account.NickName,
+			Description:       account.Description,
+			UserID:            account.UserID,
+			AvatarURL:         account.AvatarURL,
+			Location:          account.Location,
+			AccessToken:       account.AccessToken,
+			AccessTokenSecret: account.AccessTokenSecret,
+			RefreshToken:      account.RefreshToken,
+			ExpiresAt:         account.ExpiresAt,
+		}
+		user, err = userStore.CreateUser(ctx, data)
 		if err != nil {
 			fmt.Fprintln(w, err)
 			return

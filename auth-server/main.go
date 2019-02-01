@@ -11,9 +11,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gocontrib/auth"
-	"github.com/gocontrib/auth/oauth"
 	"github.com/gocontrib/request"
-	"github.com/markbates/goth/providers/vk"
 )
 
 var port int64 = 3131
@@ -61,8 +59,8 @@ func makeAPIHandler() http.Handler {
 		fmt.Fprintf(w, "token: %s\n", token)
 	})
 
-	oauth.WithProviders(authConfig, "vk", vk.New)
-	oauth.RegisterAPI(r, authConfig)
+	r.Post("/api/login", auth.LoginHandlerFunc(authConfig))
+	r.Post("/api/register", auth.RegisterHandlerFunc(authConfig))
 
 	return r
 }

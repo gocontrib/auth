@@ -2,8 +2,7 @@ package auth
 
 import (
 	"context"
-
-	"github.com/markbates/goth"
+	"time"
 )
 
 type User interface {
@@ -20,9 +19,28 @@ type UserStore interface {
 	Close()
 }
 
+type UserData struct {
+	RawData           map[string]interface{}
+	Provider          string
+	Email             string
+	Name              string
+	FirstName         string
+	LastName          string
+	NickName          string
+	Description       string
+	UserID            string
+	AvatarURL         string
+	Location          string
+	AccessToken       string
+	AccessTokenSecret string
+	RefreshToken      string
+	ExpiresAt         time.Time
+	Role              string
+}
+
 type UserStoreEx interface {
 	FindUserByEmail(ctx context.Context, userID string) (User, error)
-	CreateUser(ctx context.Context, account goth.User) (User, error)
+	CreateUser(ctx context.Context, data UserData) (User, error)
 }
 
 type UserInfo struct {
