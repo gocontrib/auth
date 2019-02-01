@@ -78,4 +78,9 @@ var (
 		Status:  http.StatusUnauthorized,
 		Message: "Cannot encode user token",
 	}
+	ErrBadState = &Error{
+		Code:    "AUTH-INTERNAL-SERVER-ERROR",
+		Status:  http.StatusInternalServerError,
+		Message: "Internal server error",
+	}
 )
