@@ -17,13 +17,17 @@ import (
 
 type providerFactory = func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider
 
+var providerNames []string
+
 func WithProviders(config *auth.Config, providers ...interface{}) {
+	providerNames = []string{}
 	var gothProviders []goth.Provider
 	for i := 0; i+1 < len(providers); i++ {
 		name := providers[i].(string)
 		factory := makeProviderFactory(providers[i+1])
 		provider := makeProvider(config, name, factory)
 		if provider != nil {
+			providerNames = append(providerNames, name)
 			gothProviders = append(gothProviders, provider)
 		}
 	}
@@ -102,6 +106,10 @@ func RegisterAPI(mux Router, config *auth.Config) {
 		}
 		return defaultGetProviderName(r)
 	}
+
+	mux.Get("/api/oauth/providers", func(w http.ResponseWriter, r *http.Request) {
+		auth.SendJSON(w, providerNames)
+	})
 
 	mux.Get("/api/oauth/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		// try to get the user without re-authenticating
