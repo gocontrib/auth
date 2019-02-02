@@ -180,5 +180,5 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 	request.SetCookie(w, r, config.TokenCookie, tokenString)
 
 	// TODO support return_url, absolute url if needed
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/token="+tokenString, http.StatusFound)
 }
