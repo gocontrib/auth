@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -13,6 +14,7 @@ import (
 	"github.com/gocontrib/auth"
 	"github.com/gocontrib/auth/oauth"
 	"github.com/gocontrib/request"
+	"github.com/gorilla/handlers"
 	"github.com/markbates/goth/providers/vk"
 )
 
@@ -34,7 +36,7 @@ func makeAPIHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+	r.Use(Logger)
 	r.Use(middleware.Recoverer)
 
 	// Basic CORS
@@ -65,6 +67,10 @@ func makeAPIHandler() http.Handler {
 	oauth.RegisterAPI(r, authConfig)
 
 	return r
+}
+
+func Logger(next http.Handler) http.Handler {
+	return handlers.LoggingHandler(os.Stdout, next)
 }
 
 type memStore map[string]*auth.UserInfo

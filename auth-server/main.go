@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gocontrib/auth"
 	"github.com/gocontrib/request"
+	"github.com/gorilla/handlers"
 )
 
 var port int64 = 3131
@@ -32,7 +34,7 @@ func makeAPIHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+	r.Use(Logger)
 	r.Use(middleware.Recoverer)
 
 	// Basic CORS
@@ -63,6 +65,10 @@ func makeAPIHandler() http.Handler {
 	r.Post("/api/register", auth.RegisterHandlerFunc(authConfig))
 
 	return r
+}
+
+func Logger(next http.Handler) http.Handler {
+	return handlers.LoggingHandler(os.Stdout, next)
 }
 
 type memStore map[string]*auth.UserInfo
