@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/gocontrib/auth"
 	"github.com/gocontrib/request"
 	"github.com/gorilla/handlers"
+	log "github.com/sirupsen/logrus"
 )
 
 var port int64 = 3131

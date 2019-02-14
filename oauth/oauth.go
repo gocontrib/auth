@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gocontrib/auth"
-	"github.com/gocontrib/log"
 	"github.com/gocontrib/request"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	log "github.com/sirupsen/logrus"
 )
 
 type providerFactory = func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider
