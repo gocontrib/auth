@@ -19,6 +19,10 @@ type providerFactory = func(clientKey, secret, callbackURL string, scopes ...str
 
 var providerNames []string
 
+// WithProviders registers OAuth providers
+// Example:
+// import "github.com/markbates/goth/providers/vk"
+// oauth.WithProviders("vk", vk.New)
 func WithProviders(config *auth.Config, providers ...interface{}) {
 	providerNames = []string{}
 	var gothProviders []goth.Provider
@@ -60,13 +64,13 @@ func makeProvider(config *auth.Config, provider string, factory providerFactory)
 	key := os.Getenv(p + "_KEY")
 	secret := os.Getenv(p + "_SECRET")
 	if len(key) == 0 || len(secret) == 0 {
-		log.Warning("%s has no keys\n", provider)
+		log.Warningf("%s has no keys\n", provider)
 		return nil
 	}
 
 	baseURL := strings.TrimRight(getBaseURL(config), "/")
 	callbackURL := baseURL + "/api/oauth/callback/" + provider
-	log.Debug("%s callback: %s\n", provider, callbackURL)
+	log.Debugf("%s callback: %s\n", provider, callbackURL)
 
 	// TODO support scopes via env
 	return factory(key, secret, callbackURL)
@@ -86,11 +90,13 @@ func getBaseURL(config *auth.Config) string {
 	return "http://localhost:4200"
 }
 
+// Router interface to allow use of any router
 type Router interface {
 	Get(pattern string, h http.HandlerFunc)
 }
 
-func RegisterAPI(mux Router, config *auth.Config) {
+// RegisterAPI registers OAuth HTTP handlers
+func RegisterAPI(r Router, config *auth.Config) {
 	config = config.SetDefaults()
 
 	userStore := config.UserStoreEx
@@ -107,11 +113,21 @@ func RegisterAPI(mux Router, config *auth.Config) {
 		return defaultGetProviderName(r)
 	}
 
-	mux.Get("/api/oauth/providers", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/oauth/success", func(w http.ResponseWriter, r *http.Request) {
+		// TODO print nice html page
+		fmt.Fprintf(w, "<body>Hey, buddy!</body>")
+	})
+
+	r.Get("/oauth/error", func(w http.ResponseWriter, r *http.Request) {
+		// TODO print nice html error page
+		fmt.Fprintf(w, "<body>Oops, your OAuth failed! Please try again later</body>")
+	})
+
+	r.Get("/api/oauth/providers", func(w http.ResponseWriter, r *http.Request) {
 		auth.SendJSON(w, providerNames)
 	})
 
-	mux.Get("/api/oauth/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/oauth/login/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		// try to get the user without re-authenticating
 		if user, err := gothic.CompleteUserAuth(w, r); err == nil {
 			completeOAuthFlow(w, r, config, user)
@@ -120,16 +136,16 @@ func RegisterAPI(mux Router, config *auth.Config) {
 		}
 	})
 
-	mux.Get("/api/oauth/logout/{provider}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/oauth/logout/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		gothic.Logout(w, r)
 		w.Header().Set("Location", "/")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
 
-	mux.Get("/api/oauth/callback/{provider}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/oauth/callback/{provider}", func(w http.ResponseWriter, r *http.Request) {
 		user, err := gothic.CompleteUserAuth(w, r)
 		if err != nil {
-			fmt.Fprintln(w, err)
+			oauthError(w, r, err)
 			return
 		}
 		completeOAuthFlow(w, r, config, user)
@@ -165,7 +181,7 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 		}
 		user, err = userStore.CreateUser(ctx, data)
 		if err != nil {
-			fmt.Fprintln(w, err)
+			oauthError(w, r, err)
 			return
 		}
 	}
@@ -173,12 +189,16 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 	token := auth.MakeToken(r, config, user)
 	tokenString, err3 := token.Encode(config)
 	if err3 != nil {
-		auth.SendError(w, err3)
+		oauthError(w, r, err3)
 		return
 	}
 
 	request.SetCookie(w, r, config.TokenCookie, tokenString)
 
 	// TODO support return_url, absolute url if needed
-	http.Redirect(w, r, "/?token="+tokenString, http.StatusFound)
+	http.Redirect(w, r, "/oauth/success?token="+tokenString, http.StatusFound)
+}
+
+func oauthError(w http.ResponseWriter, r *http.Request, err error) {
+	http.Redirect(w, r, "/oauth/error?message="+err.Error(), http.StatusInternalServerError)
 }
