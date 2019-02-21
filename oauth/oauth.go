@@ -26,7 +26,7 @@ var providerNames []string
 func WithProviders(config *auth.Config, providers ...interface{}) {
 	providerNames = []string{}
 	var gothProviders []goth.Provider
-	for i := 0; i+1 < len(providers); i++ {
+	for i := 0; i+1 < len(providers); i += 2 {
 		name := providers[i].(string)
 		factory := makeProviderFactory(providers[i+1])
 		provider := makeProvider(config, name, factory)
