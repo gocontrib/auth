@@ -14,6 +14,8 @@ import (
 	"github.com/gocontrib/auth/oauth"
 	"github.com/gocontrib/request"
 	"github.com/gorilla/handlers"
+	"github.com/markbates/goth/providers/facebook"
+	"github.com/markbates/goth/providers/google"
 	"github.com/markbates/goth/providers/vk"
 	log "github.com/sirupsen/logrus"
 )
@@ -36,7 +38,7 @@ func makeAPIHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(Logger)
+	r.Use(logMiddleware)
 	r.Use(middleware.Recoverer)
 
 	// Basic CORS
@@ -63,13 +65,13 @@ func makeAPIHandler() http.Handler {
 		fmt.Fprintf(w, "token: %s\n", token)
 	})
 
-	oauth.WithProviders(authConfig, "vk", vk.New)
+	oauth.WithProviders(authConfig, "vk", vk.New, "facebook", facebook.New, "google", google.New)
 	oauth.RegisterAPI(r, authConfig)
 
 	return r
 }
 
-func Logger(next http.Handler) http.Handler {
+func logMiddleware(next http.Handler) http.Handler {
 	return handlers.LoggingHandler(os.Stdout, next)
 }
 
