@@ -130,12 +130,12 @@ func RegisterAPI(r Router, config *auth.Config) {
 		return defaultGetProviderName(r)
 	}
 
-	r.Get("/oauth/success", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/oauth/success", func(w http.ResponseWriter, r *http.Request) {
 		// TODO print nice html page
 		fmt.Fprintf(w, "<body>Hey, buddy!</body>")
 	})
 
-	r.Get("/oauth/error", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/oauth/error", func(w http.ResponseWriter, r *http.Request) {
 		// TODO print nice html error page
 		fmt.Fprintf(w, "<body>Oops, your OAuth failed! Please try again later</body>")
 	})
@@ -213,9 +213,9 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 	request.SetCookie(w, r, config.TokenCookie, tokenString)
 
 	// TODO support return_url, absolute url if needed
-	http.Redirect(w, r, "/oauth/success?token="+tokenString, http.StatusFound)
+	http.Redirect(w, r, "/api/oauth/success?token="+tokenString, http.StatusFound)
 }
 
 func oauthError(w http.ResponseWriter, r *http.Request, err error) {
-	http.Redirect(w, r, "/oauth/error?message="+err.Error(), http.StatusInternalServerError)
+	http.Redirect(w, r, "/api/oauth/error?message="+err.Error(), http.StatusInternalServerError)
 }
