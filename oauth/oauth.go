@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -83,11 +84,27 @@ func getBaseURL(config *auth.Config) string {
 	if config.ServerPort != 0 {
 		return fmt.Sprintf("http://localhost:%d", config.ServerPort)
 	}
+	hostname := Hostname()
+	if port, err := strconv.ParseInt(os.Getenv("HTTP_PORT"), 10, 64); err == nil {
+		if port == 80 {
+			return fmt.Sprintf("http://%s", hostname)
+		}
+		return fmt.Sprintf("http://%s:%d", hostname, port)
+	}
+	return fmt.Sprintf("http://%s", hostname)
+}
+
+// Hostname reads HOSTNAME env var or os.Hostname used for your app
+func Hostname() string {
+	hostname := os.Getenv("HOSTNAME")
+	if len(hostname) > 0 {
+		return hostname
+	}
 	hostname, err := os.Hostname()
 	if err == nil {
-		return fmt.Sprintf("http://%s", hostname)
+		return hostname
 	}
-	return "http://localhost:4200"
+	return "localhost"
 }
 
 // Router interface to allow use of any router
