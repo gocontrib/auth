@@ -69,7 +69,9 @@ func makeProvider(config *auth.Config, provider string, factory providerFactory)
 		return nil
 	}
 
-	baseURL := strings.TrimRight(getBaseURL(config), "/")
+	// TODO detect server supports https
+	secure := true
+	baseURL := strings.TrimRight(getBaseURL(config, secure), "/")
 	callbackURL := baseURL + "/api/oauth/callback/" + provider
 	log.Debugf("%s callback: %s\n", provider, callbackURL)
 
@@ -77,21 +79,21 @@ func makeProvider(config *auth.Config, provider string, factory providerFactory)
 	return factory(key, secret, callbackURL)
 }
 
-func getBaseURL(config *auth.Config) string {
-	if len(config.ServerURL) > 0 {
-		return config.ServerURL
-	}
-	if config.ServerPort != 0 {
-		return fmt.Sprintf("http://localhost:%d", config.ServerPort)
+func getBaseURL(config *auth.Config, secure bool) string {
+	scheme := "http"
+	portVar := "HTTP_PORT"
+	if secure {
+		scheme = "https"
+		portVar = "HTTPS_PORT"
 	}
 	hostname := Hostname()
-	if port, err := strconv.ParseInt(os.Getenv("HTTP_PORT"), 10, 64); err == nil {
-		if port == 80 {
-			return fmt.Sprintf("http://%s", hostname)
+	if port, err := strconv.ParseInt(os.Getenv(portVar), 10, 64); err == nil {
+		if !secure && port == 80 || secure && port == 443 {
+			return fmt.Sprintf("%s://%s", scheme, hostname)
 		}
-		return fmt.Sprintf("http://%s:%d", hostname, port)
+		return fmt.Sprintf("%s://%s:%d", scheme, hostname, port)
 	}
-	return fmt.Sprintf("http://%s", hostname)
+	return fmt.Sprintf("%s://%s", scheme, hostname)
 }
 
 // Hostname reads HOSTNAME env var or os.Hostname used for your app
