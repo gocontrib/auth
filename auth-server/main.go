@@ -52,7 +52,6 @@ func makeAPIHandler() http.Handler {
 	authConfig := &auth.Config{
 		UserStore:   &memStore{},
 		UserStoreEx: &memStore{},
-		ServerPort:  port,
 	}
 	authConfig = authConfig.SetDefaults()
 
@@ -109,4 +108,8 @@ func (m memStore) CreateUser(ctx context.Context, data auth.UserData) (auth.User
 	}
 	m[user.Name] = user
 	return user, nil
+}
+
+func (m memStore) UpdateAccount(ctx context.Context, user auth.User, data auth.UserData) error {
+	return nil
 }
