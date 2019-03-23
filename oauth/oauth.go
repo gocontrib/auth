@@ -206,7 +206,7 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 		}
 	}
 
-	user, err = userStore.UpdateAccount(ctx, data)
+	err = userStore.UpdateAccount(ctx, data)
 	if err != nil {
 		oauthError(w, r, err)
 		return
