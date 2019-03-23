@@ -41,6 +41,7 @@ type UserData struct {
 type UserStoreEx interface {
 	FindUserByEmail(ctx context.Context, userID string) (User, error)
 	CreateUser(ctx context.Context, data UserData) (User, error)
+	UpdateAccount(ctx context.Context, data UserData) (User, error)
 }
 
 type UserInfo struct {

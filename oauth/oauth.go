@@ -178,31 +178,38 @@ func completeOAuthFlow(w http.ResponseWriter, r *http.Request, config *auth.Conf
 		return
 	}
 
+	// create user and link with external account
+	data := auth.UserData{
+		RawData:           account.RawData,
+		Provider:          account.Provider,
+		Email:             account.Email,
+		Name:              account.Name,
+		FirstName:         account.FirstName,
+		LastName:          account.LastName,
+		NickName:          account.NickName,
+		Description:       account.Description,
+		UserID:            account.UserID,
+		AvatarURL:         account.AvatarURL,
+		Location:          account.Location,
+		AccessToken:       account.AccessToken,
+		AccessTokenSecret: account.AccessTokenSecret,
+		RefreshToken:      account.RefreshToken,
+		ExpiresAt:         account.ExpiresAt,
+	}
+
 	user, err := userStore.FindUserByEmail(ctx, account.Email)
 	if err != nil {
-		// create user and link with external account
-		data := auth.UserData{
-			RawData:           account.RawData,
-			Provider:          account.Provider,
-			Email:             account.Email,
-			Name:              account.Name,
-			FirstName:         account.FirstName,
-			LastName:          account.LastName,
-			NickName:          account.NickName,
-			Description:       account.Description,
-			UserID:            account.UserID,
-			AvatarURL:         account.AvatarURL,
-			Location:          account.Location,
-			AccessToken:       account.AccessToken,
-			AccessTokenSecret: account.AccessTokenSecret,
-			RefreshToken:      account.RefreshToken,
-			ExpiresAt:         account.ExpiresAt,
-		}
 		user, err = userStore.CreateUser(ctx, data)
 		if err != nil {
 			oauthError(w, r, err)
 			return
 		}
+	}
+
+	user, err = userStore.UpdateAccount(ctx, data)
+	if err != nil {
+		oauthError(w, r, err)
+		return
 	}
 
 	token := auth.MakeToken(r, config, user)
