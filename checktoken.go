@@ -5,6 +5,10 @@ import (
 )
 
 func CheckTokenHandler(config *Config) http.Handler {
+	return CheckTokenHandlerFunc(config)
+}
+
+func CheckTokenHandlerFunc(config *Config) http.HandlerFunc {
 	config = config.SetDefaults()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
