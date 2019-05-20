@@ -24,8 +24,7 @@ type LoginResponse struct {
 }
 
 func LoginHandler(config *Config) http.Handler {
-	config = config.SetDefaults()
-	return http.HandlerFunc(LoginHandlerFunc(config))
+	return LoginHandlerFunc(config)
 }
 
 func LoginHandlerFunc(config *Config) http.HandlerFunc {

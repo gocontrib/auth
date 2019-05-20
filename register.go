@@ -6,7 +6,13 @@ import (
 	"net/http"
 )
 
+func RegisterHandler(config *Config) http.Handler {
+	return RegisterHandlerFunc(config)
+}
+
 func RegisterHandlerFunc(config *Config) http.HandlerFunc {
+	config = config.SetDefaults()
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO include other fields
 
