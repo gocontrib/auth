@@ -77,13 +77,10 @@ func (m *middleware) authenticate(r *http.Request) (context.Context, *Error) {
 
 // Validates authorization header.
 func (m *middleware) validateHeader(r *http.Request, auth string) (context.Context, *Error) {
-	var f = strings.Fields(auth)
-	if len(f) != 2 {
-		return nil, ErrBadAuthorizationHeader
+	scheme, token, err := parseAuthorizationHeader(auth)
+	if err != nil {
+		return nil, err
 	}
-
-	var scheme = strings.ToLower(f[0])
-	var token = f[1]
 
 	switch scheme {
 	case schemeBasic:
@@ -93,6 +90,26 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 	default:
 		return nil, ErrUnsupportedAuthScheme
 	}
+}
+
+func parseAuthorizationHeader(auth string) (scheme string, token string, err *Error) {
+	var f = strings.Fields(auth)
+	if len(f) != 2 {
+		err = ErrBadAuthorizationHeader
+		return
+	}
+
+	scheme = strings.ToLower(f[0])
+	token = f[1]
+
+	if scheme == schemeBasic || scheme == schemeBearer {
+		return
+	}
+
+	scheme = ""
+	token = ""
+	err = ErrUnsupportedAuthScheme
+	return
 }
 
 func (m *middleware) validateBasicAuth(r *http.Request) (context.Context, *Error) {
@@ -110,17 +127,26 @@ func (m *middleware) validateBasicAuth(r *http.Request) (context.Context, *Error
 }
 
 func (m *middleware) validateJWT(r *http.Request, tokenString string) (context.Context, *Error) {
-	token, err := parseToken(m.config, tokenString, getClientIP(r), false)
+	_, user, err := validateJWT(m.config, r, tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	user, error := m.config.UserStore.FindUserByID(r.Context(), token.UserID)
-	if error != nil {
-		return nil, ErrUserNotFound.WithCause(error)
+	return m.validateUser(r, user)
+}
+
+func validateJWT(config *Config, r *http.Request, tokenString string) (*Token, User, *Error) {
+	token, err := parseToken(config, tokenString, getClientIP(r), false)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return m.validateUser(r, user)
+	user, error := config.UserStore.FindUserByID(r.Context(), token.UserID)
+	if error != nil {
+		return nil, nil, ErrUserNotFound.WithCause(error)
+	}
+
+	return token, user, nil
 }
 
 func (m *middleware) validateUser(r *http.Request, user User) (context.Context, *Error) {
