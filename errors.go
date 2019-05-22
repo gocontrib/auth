@@ -38,6 +38,16 @@ var (
 		Status:  http.StatusUnauthorized,
 		Message: "User token is invalid, please re-authenticate",
 	}
+	ErrMissingUserID = &Error{
+		Code:    "AUTH-INVALID-TOKEN",
+		Status:  http.StatusUnauthorized,
+		Message: "User token is missing user_id field",
+	}
+	ErrMissingExp = &Error{
+		Code:    "AUTH-INVALID-TOKEN",
+		Status:  http.StatusUnauthorized,
+		Message: "User token is missing exp field",
+	}
 	ErrInvalidIssuer = &Error{
 		Code:    "AUTH-INVALID-ISSUER",
 		Status:  http.StatusUnauthorized,

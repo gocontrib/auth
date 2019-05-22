@@ -82,14 +82,13 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 
 	// check required fields
 	userID := getString(claims, "user_id")
-	userName := getString(claims, "user_name")
 	if len(userID) == 0 {
-		return nil, ErrInvalidToken
+		return nil, ErrMissingUserID
 	}
 
 	exp := getTime(claims, "exp")
 	if exp == nil {
-		return nil, ErrInvalidToken
+		return nil, ErrMissingExp
 	}
 
 	issuedAt := getTime(claims, "iat")
@@ -97,6 +96,8 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 		t := time.Time{}
 		issuedAt = &t
 	}
+
+	userName := getString(claims, "user_name")
 
 	return &Token{
 		UserID:    userID,
