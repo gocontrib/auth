@@ -72,7 +72,8 @@ func getTime(data map[string]interface{}, key string) *time.Time {
 }
 
 func SendError(w http.ResponseWriter, err *Error) {
-	log.Errorf("AUTH ERROR: %v", err)
+	s, _ := json.Marshal(err)
+	log.Errorf("AUTH ERROR: %s", string(s))
 	w.Header().Set("Content-Type", contentJSON)
 	w.WriteHeader(err.Status)
 	SendJSON(w, err)
