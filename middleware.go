@@ -110,8 +110,6 @@ func parseAuthorizationHeader(auth string) (scheme string, token string, err *Er
 		return
 	}
 
-	scheme = ""
-	token = ""
 	err = ErrUnsupportedAuthScheme
 	return
 }
