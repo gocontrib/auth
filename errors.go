@@ -16,10 +16,12 @@ func (err *Error) Error() string {
 }
 
 func (err *Error) WithCause(cause error) *Error {
-	result := &Error{}
-	*result = *err
-	result.Cause = cause
-	return err
+	return &Error{
+		Code:    err.Code,
+		Message: err.Message,
+		Status:  err.Status,
+		Cause:   cause,
+	}
 }
 
 var (

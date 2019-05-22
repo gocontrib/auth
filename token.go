@@ -60,14 +60,11 @@ func parseToken(config *Config, tokenString, expectedAudience string, allowExpir
 	parser.SkipClaimsValidation = allowExpired
 
 	claims := jwt.MapClaims{}
-	token, err := parser.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	_, err := parser.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return config.SecretKey, nil
 	})
 	if err != nil {
 		return nil, ErrInvalidToken.WithCause(err)
-	}
-	if !token.Valid {
-		return nil, ErrInvalidToken
 	}
 
 	issuer := getString(claims, "iss")
