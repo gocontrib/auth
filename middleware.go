@@ -93,6 +93,10 @@ func (m *middleware) validateHeader(r *http.Request, auth string) (context.Conte
 }
 
 func parseAuthorizationHeader(auth string) (scheme string, token string, err *Error) {
+	if len(auth) == 0 {
+		err = ErrBadAuthorizationHeader
+		return
+	}
 	var f = strings.Fields(auth)
 	if len(f) != 2 {
 		err = ErrBadAuthorizationHeader

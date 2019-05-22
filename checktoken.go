@@ -12,7 +12,7 @@ func CheckTokenHandlerFunc(config *Config) http.HandlerFunc {
 	config = config.SetDefaults()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := r.Header.Get("Authorization")
+		auth := r.Header.Get(authorizationHeader)
 		scheme, tokenString, err := parseAuthorizationHeader(auth)
 		if err == nil && scheme != schemeBearer {
 			err = ErrUnsupportedAuthScheme
