@@ -138,7 +138,11 @@ func (m *middleware) validateJWT(r *http.Request, tokenString string) (context.C
 }
 
 func validateJWT(config *Config, r *http.Request, tokenString string) (*Token, User, *Error) {
-	token, err := parseToken(config, tokenString, getClientIP(r), false)
+	ip := getClientIP(r)
+	if ip == "127.0.0.1" && len(r.Header.Get("X-Forwarded-For")) > 0 {
+		ip = ""
+	}
+	token, err := parseToken(config, tokenString, ip, false)
 	if err != nil {
 		return nil, nil, err
 	}
