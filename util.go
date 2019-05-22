@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tomasen/realip"
 )
 
@@ -71,6 +72,7 @@ func getTime(data map[string]interface{}, key string) *time.Time {
 }
 
 func SendError(w http.ResponseWriter, err *Error) {
+	log.Errorf("AUTH ERROR: %v", err)
 	w.Header().Set("Content-Type", contentJSON)
 	w.WriteHeader(err.Status)
 	SendJSON(w, err)
