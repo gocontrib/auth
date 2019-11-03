@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -50,6 +52,7 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		m.next.ServeHTTP(w, r)
 	} else {
+		log.Errorf("AUTH ERROR: %v", err)
 		SendError(w, err)
 	}
 }
