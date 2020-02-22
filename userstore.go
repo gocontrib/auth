@@ -36,6 +36,7 @@ type UserData struct {
 	RefreshToken      string
 	ExpiresAt         time.Time
 	Role              string
+	Password          string
 }
 
 type UserStoreEx interface {
